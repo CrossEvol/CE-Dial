@@ -6,7 +6,8 @@ import { exampleThemeStorage } from '@extension/storage';
 import { ToggleButton } from '@extension/ui';
 import '@src/NewTab.css';
 import '@src/NewTab.scss';
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { useBearStore } from './store';
 
 // Sample bookmark data - you can replace with your actual data structure
 const bookmarks = [
@@ -21,6 +22,9 @@ const NewTab = () => {
   const isLight = theme === 'light';
   const [searchQuery, setSearchQuery] = useState('');
 
+  const { todoLists, fetchTodoLists, addTodoList, addTodoItem, toggleTodoItem, deleteTodoItem, deleteTodoList } =
+    useBearStore();
+
   const handleSearch = () => {
     if (searchQuery.trim()) {
       const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
@@ -33,6 +37,11 @@ const NewTab = () => {
       handleSearch();
     }
   };
+
+  React.useEffect(() => {
+    // Fetch todo lists when component mounts
+    fetchTodoLists();
+  }, [fetchTodoLists]);
 
   return (
     <div className={`min-h-screen p-8 ${isLight ? 'bg-slate-50' : 'bg-gray-800'}`}>
@@ -78,6 +87,52 @@ const NewTab = () => {
             </Card>
           ))}
         </div>
+      </div>
+
+      {/* Todo Lists Section */}
+      <div className="max-w-3xl mx-auto mt-8">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className={`text-xl font-bold ${isLight ? 'text-gray-900' : 'text-gray-100'}`}>Todo Lists</h2>
+          <Button onClick={() => addTodoList('New List')}>Add List</Button>
+        </div>
+
+        {todoLists.map(list => (
+          <Card key={list.id} className="mb-4">
+            <CardContent className="p-4">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className={`font-medium ${isLight ? 'text-gray-900' : 'text-gray-100'}`}>{list.title}</h3>
+                <Button variant="destructive" onClick={() => list.id && deleteTodoList(list.id)}>
+                  Delete List
+                </Button>
+              </div>
+
+              <div className="space-y-2">
+                {list.items.map(item => (
+                  <div key={item.id} className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={item.done}
+                      onChange={e => item.id && toggleTodoItem(item.id, e.target.checked)}
+                    />
+                    <span
+                      className={`${item.done ? 'line-through' : ''} ${isLight ? 'text-gray-700' : 'text-gray-300'}`}>
+                      {item.title}
+                    </span>
+                    <Button variant="ghost" onClick={() => item.id && deleteTodoItem(item.id)}>
+                      ✕
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  variant="outline"
+                  onClick={() => list.id && addTodoItem(list.id, 'New Todo Item')}
+                  className="mt-2">
+                  Add Item
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Theme toggle - keeping this from original code */}

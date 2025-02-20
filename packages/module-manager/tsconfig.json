@@ -3,6 +3,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "outDir": "dist",
+    "noEmit": true,
     "allowImportingTsExtensions": true
   },
   "include": ["lib", "index.mts"]

@@ -54,7 +54,28 @@ export default ts.config(
       'import-x/no-unresolved': 'off',
       'import-x/no-named-as-default-member': 'off',
       '@typescript-eslint/consistent-type-imports': 'error',
+      '@typescript-eslint/no-empty-object-type': ['warn', { allowInterfaces: 'always', allowObjectTypes: 'always' }],
       'react/prop-types': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          argsIgnorePattern: '^.',
+          varsIgnorePattern: '^_',
+        },
+      ],
+      'no-unused-vars': [
+        'warn',
+        {
+          vars: 'all',
+          args: 'none',
+          caughtErrors: 'all',
+          ignoreRestSiblings: false,
+          reportUsedIgnorePattern: false,
+          varsIgnorePattern: '^_',
+          argsIgnorePattern: '^.',
+        },
+      ],
+      'import-x/no-named-as-default': 'off',
     },
     linterOptions: {
       reportUnusedDisableDirectives: 'error',
