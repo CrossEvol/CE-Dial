@@ -6,16 +6,33 @@ import { exampleThemeStorage } from '@extension/storage';
 import { ToggleButton } from '@extension/ui';
 import '@src/NewTab.css';
 import '@src/NewTab.scss';
+import { Facebook, Github, Plus, Twitter } from 'lucide-react';
 import React, { useState } from 'react';
+import type * as z from 'zod';
 import { useBearStore } from './store';
+import { type formSchema } from './widgets/AddForm';
+import type { BookMarkItem } from './widgets/BookMark';
+import { Bookmark } from './widgets/BookMark';
 
-// Sample bookmark data - you can replace with your actual data structure
+// Sample bookmark data with default bookmark at the end
 const bookmarks = [
-  { title: 'GitHub', url: 'github.com', icon: '/icons/github.png' },
-  { title: 'OpenAI', url: 'chat.openai.com', icon: '/icons/openai.png' },
-  { title: 'Socket.io', url: 'socket.io', icon: '/icons/socketio.png' },
+  { title: 'GitHub', url: 'github.com', isDefault: false, IconComponent: Github, clickCount: 0 },
+  { title: 'Facebook', url: 'https://www.facebook.com/', isDefault: false, IconComponent: Facebook, clickCount: 0 },
+  { title: 'Twitter', url: 'https://x.com/', isDefault: false, IconComponent: Twitter, clickCount: 0 },
+  {
+    title: 'Default',
+    url: 'example.com',
+    isDefault: true,
+    IconComponent: Plus,
+    clickCount: 0,
+  },
   // Add more bookmarks as needed
 ];
+
+// Add this type definition at the top of the file
+interface BookmarkStats {
+  [key: string]: number;
+}
 
 const NewTab = () => {
   const theme = useStorage(exampleThemeStorage);
@@ -24,6 +41,23 @@ const NewTab = () => {
 
   const { todoLists, fetchTodoLists, addTodoList, addTodoItem, toggleTodoItem, deleteTodoItem, deleteTodoList } =
     useBearStore();
+
+  // Update the bookmarkStats state definition
+  const [bookmarkStats, setBookmarkStats] = useState<BookmarkStats>(
+    bookmarks.reduce(
+      (acc, bookmark) => ({
+        ...acc,
+        [bookmark.url]: bookmark.clickCount,
+      }),
+      {} as BookmarkStats,
+    ),
+  );
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  // Add state for form inputs
+  const [newBookmarkName, setNewBookmarkName] = useState('');
+  const [newBookmarkUrl, setNewBookmarkUrl] = useState('');
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
@@ -36,6 +70,46 @@ const NewTab = () => {
     if (e.key === 'Enter') {
       handleSearch();
     }
+  };
+
+  const handleBookmarkClick = (url: string) => {
+    setBookmarkStats(prev => ({
+      ...prev,
+      [url]: (prev[url] || 0) + 1,
+    }));
+    window.open(`https://${url}`, '_blank');
+  };
+
+  const handleEdit = (e: React.MouseEvent, bookmark: BookMarkItem) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Add edit logic here
+    console.log('Edit bookmark:', bookmark.title);
+  };
+
+  const handleDelete = (e: React.MouseEvent, bookmark: BookMarkItem) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Add delete logic here
+    console.log('Delete bookmark:', bookmark.title);
+  };
+
+  const handleAddBookmark = (data: z.infer<typeof formSchema>) => {
+    console.log('New bookmark data:', data);
+    // Add logic to create new bookmark
+    setDialogOpen(false);
+  };
+
+  const handleSubmitBookmark = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleAddBookmark({
+      title: newBookmarkName,
+      url: newBookmarkUrl,
+    } as z.infer<typeof formSchema>);
+
+    // Clear form
+    setNewBookmarkName('');
+    setNewBookmarkUrl('');
   };
 
   React.useEffect(() => {
@@ -69,22 +143,15 @@ const NewTab = () => {
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {bookmarks.map((bookmark, index) => (
-            <Card key={index} className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-4">
-                <a
-                  href={`https://${bookmark.url}`}
-                  className="flex flex-col items-center space-y-2"
-                  target="_blank"
-                  rel="noopener noreferrer">
-                  <div className="w-16 h-16 flex items-center justify-center">
-                    <img src={bookmark.icon} alt={bookmark.title} className="max-w-full max-h-full" />
-                  </div>
-                  <span className={`text-sm font-medium ${isLight ? 'text-gray-900' : 'text-gray-100'}`}>
-                    {bookmark.title}
-                  </span>
-                </a>
-              </CardContent>
-            </Card>
+            <Bookmark
+              key={index}
+              bookmark={bookmark}
+              isLight={isLight}
+              bookmarkStats={bookmarkStats}
+              onBookmarkClick={handleBookmarkClick}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
           ))}
         </div>
       </div>
@@ -139,19 +206,6 @@ const NewTab = () => {
       <div className="fixed bottom-4 right-4">
         <ToggleButton onClick={exampleThemeStorage.toggle}>{t('toggleTheme')}</ToggleButton>
       </div>
-
-      {/* Original content commented out
-      <header className={`App-header ${isLight ? 'text-gray-900' : 'text-gray-100'}`}>
-        <button onClick={goGithubSite}>
-          <img src={chrome.runtime.getURL(logo)} className="App-logo" alt="logo" />
-        </button>
-        <p>
-          Edit <code>pages/new-tab/src/NewTab.tsx</code>
-        </p>
-        <Button>Click me</Button>
-        <h6>The color of this paragraph is defined using SASS.</h6>
-      </header>
-      */}
     </div>
   );
 };
