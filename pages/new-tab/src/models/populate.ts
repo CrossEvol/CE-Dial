@@ -1,21 +1,60 @@
 import { db } from './db';
 
 export async function populate() {
-  const todoListId = await db.todoLists.add({
-    title: 'To Do Today',
+  const defaultGroupId = await db.groups.add({
+    name: 'Default',
+    pos: 0,
+    createdAt: new Date(),
+    updatedAt: new Date(),
   });
-  await db.todoItems.bulkAdd([
+
+  const workGroupId = await db.groups.add({
+    name: 'Work',
+    pos: 1,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+
+  const personalGroupId = await db.groups.add({
+    name: 'Personal',
+    pos: 2,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+
+  await db.dials.bulkAdd([
     {
-      todoListId,
-      title: 'Feed the birds',
+      url: 'github.com',
+      title: 'GitHub',
+      pos: 1,
+      groupId: defaultGroupId,
+      thumbSourceType: 'default',
+      thumbIndex: 1,
+      clickCount: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     },
     {
-      todoListId,
-      title: 'Watch a movie',
+      url: 'facebook.com',
+      title: 'Facebook',
+      pos: 2,
+      groupId: personalGroupId,
+      thumbSourceType: 'default',
+      thumbIndex: 2,
+      clickCount: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     },
     {
-      todoListId,
-      title: 'Have some sleep',
+      url: 'x.com',
+      title: 'Twitter',
+      pos: 3,
+      groupId: personalGroupId,
+      thumbSourceType: 'default',
+      thumbIndex: 3,
+      clickCount: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     },
   ]);
 }

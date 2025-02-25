@@ -1,33 +1,34 @@
 import Dexie, { type Table } from 'dexie';
+import type { DialItem } from './DialItem';
+import type { GroupItem } from './GroupItem';
 import { populate } from './populate';
-import type { TodoItem } from './TodoItem';
-import type { TodoList } from './TodoList';
 
-export class TodoDB extends Dexie {
-  todoLists!: Table<TodoList, number>;
-  todoItems!: Table<TodoItem, number>;
+export class AppDB extends Dexie {
+  dials!: Table<DialItem, number>;
+  groups!: Table<GroupItem, number>;
+
   constructor() {
-    super('TodoDB');
+    super('AppDB');
     this.version(1).stores({
-      todoLists: '++id',
-      todoItems: '++id, todoListId',
+      dials: '++id, groupId, url, title, thumbSourceType',
+      groups: '++id, name, order',
     });
   }
 
-  deleteList(todoListId: number) {
-    return this.transaction('rw', this.todoItems, this.todoLists, () => {
-      this.todoItems.where({ todoListId }).delete();
-      this.todoLists.delete(todoListId);
+  deleteGroup(groupId: number) {
+    return this.transaction('rw', this.dials, this.groups, () => {
+      this.dials.where({ groupId }).delete();
+      this.groups.delete(groupId);
     });
   }
 }
 
-export const db = new TodoDB();
+export const db = new AppDB();
 
 db.on('populate', populate);
 
 export function resetDatabase() {
-  return db.transaction('rw', db.todoLists, db.todoItems, async () => {
+  return db.transaction('rw', db.dials, db.groups, async () => {
     await Promise.all(db.tables.map(table => table.clear()));
     await populate();
   });

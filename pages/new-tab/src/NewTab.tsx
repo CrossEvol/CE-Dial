@@ -1,5 +1,4 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { t } from '@extension/i18n';
 import { useStorage, withErrorBoundary, withSuspense } from '@extension/shared';
 import { exampleThemeStorage } from '@extension/storage';
@@ -7,10 +6,7 @@ import { ToggleButton } from '@extension/ui';
 import '@src/NewTab.css';
 import '@src/NewTab.scss';
 import { Facebook, Github, Plus, Twitter } from 'lucide-react';
-import React, { useState } from 'react';
-import type * as z from 'zod';
-import { useBearStore } from './store';
-import { type formSchema } from './widgets/AddForm';
+import { useState } from 'react';
 import type { BookMarkItem } from './widgets/BookMark';
 import { Bookmark } from './widgets/BookMark';
 
@@ -39,9 +35,6 @@ const NewTab = () => {
   const isLight = theme === 'light';
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { todoLists, fetchTodoLists, addTodoList, addTodoItem, toggleTodoItem, deleteTodoItem, deleteTodoList } =
-    useBearStore();
-
   // Update the bookmarkStats state definition
   const [bookmarkStats, setBookmarkStats] = useState<BookmarkStats>(
     bookmarks.reduce(
@@ -52,12 +45,6 @@ const NewTab = () => {
       {} as BookmarkStats,
     ),
   );
-
-  const [dialogOpen, setDialogOpen] = useState(false);
-
-  // Add state for form inputs
-  const [newBookmarkName, setNewBookmarkName] = useState('');
-  const [newBookmarkUrl, setNewBookmarkUrl] = useState('');
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
@@ -93,29 +80,6 @@ const NewTab = () => {
     // Add delete logic here
     console.log('Delete bookmark:', bookmark.title);
   };
-
-  const handleAddBookmark = (data: z.infer<typeof formSchema>) => {
-    console.log('New bookmark data:', data);
-    // Add logic to create new bookmark
-    setDialogOpen(false);
-  };
-
-  const handleSubmitBookmark = (e: React.FormEvent) => {
-    e.preventDefault();
-    handleAddBookmark({
-      title: newBookmarkName,
-      url: newBookmarkUrl,
-    } as z.infer<typeof formSchema>);
-
-    // Clear form
-    setNewBookmarkName('');
-    setNewBookmarkUrl('');
-  };
-
-  React.useEffect(() => {
-    // Fetch todo lists when component mounts
-    fetchTodoLists();
-  }, [fetchTodoLists]);
 
   return (
     <div className={`min-h-screen p-8 ${isLight ? 'bg-slate-50' : 'bg-gray-800'}`}>
@@ -154,52 +118,6 @@ const NewTab = () => {
             />
           ))}
         </div>
-      </div>
-
-      {/* Todo Lists Section */}
-      <div className="max-w-3xl mx-auto mt-8">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className={`text-xl font-bold ${isLight ? 'text-gray-900' : 'text-gray-100'}`}>Todo Lists</h2>
-          <Button onClick={() => addTodoList('New List')}>Add List</Button>
-        </div>
-
-        {todoLists.map(list => (
-          <Card key={list.id} className="mb-4">
-            <CardContent className="p-4">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className={`font-medium ${isLight ? 'text-gray-900' : 'text-gray-100'}`}>{list.title}</h3>
-                <Button variant="destructive" onClick={() => list.id && deleteTodoList(list.id)}>
-                  Delete List
-                </Button>
-              </div>
-
-              <div className="space-y-2">
-                {list.items.map(item => (
-                  <div key={item.id} className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={item.done}
-                      onChange={e => item.id && toggleTodoItem(item.id, e.target.checked)}
-                    />
-                    <span
-                      className={`${item.done ? 'line-through' : ''} ${isLight ? 'text-gray-700' : 'text-gray-300'}`}>
-                      {item.title}
-                    </span>
-                    <Button variant="ghost" onClick={() => item.id && deleteTodoItem(item.id)}>
-                      ✕
-                    </Button>
-                  </div>
-                ))}
-                <Button
-                  variant="outline"
-                  onClick={() => list.id && addTodoItem(list.id, 'New Todo Item')}
-                  className="mt-2">
-                  Add Item
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
       </div>
 
       {/* Theme toggle - keeping this from original code */}

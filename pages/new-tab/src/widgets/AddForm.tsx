@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import type { ThumbSourceType } from '@/models';
+import { useBearStore } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Camera,
@@ -91,9 +93,49 @@ export function AddForm({ children }: AddFormProps) {
     },
   });
 
-  const onSubmit = (data: FormValues) => {
+  const addDial = useBearStore(state => state.addDial);
+  const groups = useBearStore(state => state.groups);
+
+  const onSubmit = async (data: FormValues) => {
     console.log('Form submitted:', data);
-    // TODO: Handle form submission
+
+    // Prepare the dial data based on the form values
+    const dialData = {
+      url: data.url,
+      title: data.title,
+      groupId: parseInt(data.group), // Assuming group is stored as the ID
+      thumbSourceType: data.previewType as ThumbSourceType,
+      thumbUrl: '',
+      thumbData: '',
+      thumbIndex: -1,
+      pos: -1,
+    };
+
+    // Add additional data based on the preview type
+    if (data.previewType === 'remote' && data.previewUrl) {
+      dialData.thumbUrl = data.previewUrl;
+    } else if (data.previewType === 'upload' && previewFile) {
+      dialData.thumbData = previewFile.preview;
+    } else if (data.previewType === 'default' && selectedIcon) {
+      // Find the index of the selected icon in the defaultIcons array
+      const iconIndex = defaultIcons.findIndex(icon => icon.name === selectedIcon.name);
+      if (iconIndex !== -1) {
+        dialData.thumbIndex = iconIndex;
+      }
+    }
+
+    try {
+      // Add the dial to the database
+      const id = await addDial(dialData);
+      console.log('Dial added with ID:', id);
+
+      // Close the dialog or show success message
+      // ...
+    } catch (error) {
+      console.error('Error adding dial:', error);
+      // Show error message
+      // ...
+    }
   };
 
   const previewType = form.watch('previewType');
