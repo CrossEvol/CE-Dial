@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import type { DialItem, GroupItem } from '@src/models';
+import { useBearStore } from '@src/store';
 import { Edit, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import AddGroup from './AddGroup';
@@ -22,6 +23,7 @@ const ManageGroup: React.FC<ManageGroupProps> = ({
   onEditGroup,
 }) => {
   const [showAddGroupForm, setShowAddGroupForm] = useState(false);
+  const setSelectedGroup = useBearStore(state => state.setSelectedGroup);
 
   return (
     <DialogContent className="sm:max-w-md">
@@ -31,9 +33,18 @@ const ManageGroup: React.FC<ManageGroupProps> = ({
       <div className="space-y-2 max-h-[60vh] overflow-y-auto">
         {groups.map(group => (
           <div key={group.id} className="flex items-center justify-between p-2 border-b">
-            <span className="font-medium">
-              {group.name} ({filteredDials.filter(dial => dial.groupId === group.id).length})
-            </span>
+            <div className="flex items-center gap-2">
+              <input
+                type="radio"
+                id={`group-${group.id}`}
+                checked={group.is_selected}
+                onChange={() => setSelectedGroup(group.id!)}
+                className="h-4 w-4"
+              />
+              <label htmlFor={`group-${group.id}`} className="font-medium">
+                {group.name} ({filteredDials.filter(dial => dial.groupId === group.id).length})
+              </label>
+            </div>
             <div className="flex space-x-2">
               <Button variant="outline" size="icon" onClick={() => onEditGroup && onEditGroup(group)}>
                 <Edit className="h-4 w-4" />

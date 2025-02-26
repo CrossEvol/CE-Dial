@@ -4,6 +4,7 @@ export async function populate() {
   const defaultGroupId = await db.groups.add({
     name: 'Default',
     pos: 0,
+    is_selected: true,
     createdAt: new Date(),
     updatedAt: new Date(),
   });
@@ -11,6 +12,7 @@ export async function populate() {
   const workGroupId = await db.groups.add({
     name: 'Work',
     pos: 1,
+    is_selected: false,
     createdAt: new Date(),
     updatedAt: new Date(),
   });
@@ -18,6 +20,7 @@ export async function populate() {
   const personalGroupId = await db.groups.add({
     name: 'Personal',
     pos: 2,
+    is_selected: false,
     createdAt: new Date(),
     updatedAt: new Date(),
   });

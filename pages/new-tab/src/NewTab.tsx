@@ -51,7 +51,6 @@ const NewTab = () => {
   const theme = useStorage(exampleThemeStorage);
   const isLight = theme === 'light';
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedGroupId, setSelectedGroupId] = useState<number | undefined>(undefined);
 
   // Dialog states
   const [isAddGroupDialogOpen, setIsAddGroupDialogOpen] = useState(false);
@@ -59,8 +58,8 @@ const NewTab = () => {
   const [isManageGroupDialogOpen, setIsManageGroupDialogOpen] = useState(false);
   const [selectedGroupForEdit, setSelectedGroupForEdit] = useState<GroupItem | null>(null);
 
-  // Get groups and dials from the store
-  const { groups, dials, fetchGroups, fetchDials } = useBearStore();
+  // Get groups, dials, and the new setSelectedGroup method from the store
+  const { groups, dials, fetchGroups, fetchDials, setSelectedGroup } = useBearStore();
 
   // Fetch groups and dials on component mount
   useEffect(() => {
@@ -70,10 +69,10 @@ const NewTab = () => {
 
   // Set the first group as selected by default when groups are loaded
   useEffect(() => {
-    if (groups.length > 0 && selectedGroupId === undefined) {
-      setSelectedGroupId(groups[0].id);
+    if (groups.length > 0 && !groups.some(group => group.is_selected)) {
+      setSelectedGroup(groups[0].id!);
     }
-  }, [groups, selectedGroupId]);
+  }, [groups, setSelectedGroup]);
 
   // Update the bookmarkStats state definition
   const [bookmarkStats, setBookmarkStats] = useState<BookmarkStats>(
@@ -126,6 +125,9 @@ const NewTab = () => {
     console.log('Deleting group:', groupId);
   };
 
+  // Get the selected group ID
+  const selectedGroupId = groups.find(group => group.is_selected)?.id;
+
   // Filter dials based on selected group
   const filteredDials = selectedGroupId ? dials.filter(dial => dial.groupId === selectedGroupId) : dials;
 
@@ -151,9 +153,9 @@ const NewTab = () => {
             <ContextMenu key={group.id}>
               <ContextMenuTrigger>
                 <button
-                  onClick={() => setSelectedGroupId(group.id)}
+                  onClick={() => setSelectedGroup(group.id!)}
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    selectedGroupId === group.id
+                    group.is_selected
                       ? isLight
                         ? 'bg-blue-600 text-white'
                         : 'bg-blue-500 text-white'
@@ -165,17 +167,17 @@ const NewTab = () => {
                 </button>
               </ContextMenuTrigger>
               <ContextMenuContent>
-                <ContextMenuCheckboxItem
-                  checked={selectedGroupId === group.id}
-                  onClick={() => setSelectedGroupId(group.id)}>
-                  Recently Used
+                <ContextMenuCheckboxItem checked={group.is_selected} onClick={() => setSelectedGroup(group.id!)}>
+                  Selected
                 </ContextMenuCheckboxItem>
                 <ContextMenuSeparator />
                 <ContextMenuItem onClick={() => handleEditGroup(group)}>Edit</ContextMenuItem>
-                <ContextMenuItem onClick={() => console.log('Move group:', group.id)}>Move</ContextMenuItem>
+                <ContextMenuItem onClick={() => console.log('Move group:', group.id)}>Delete</ContextMenuItem>
                 <ContextMenuSeparator />
                 <ContextMenuItem onClick={() => setIsManageGroupDialogOpen(true)}>Manage Groups</ContextMenuItem>
-                <ContextMenuItem onClick={() => handleDeleteGroup(group.id!)}>Delete All</ContextMenuItem>
+                <ContextMenuItem disabled onClick={() => handleDeleteGroup(group.id!)}>
+                  Delete All
+                </ContextMenuItem>
               </ContextMenuContent>
             </ContextMenu>
           ))}

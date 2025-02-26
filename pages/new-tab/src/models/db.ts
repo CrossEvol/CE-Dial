@@ -11,7 +11,7 @@ export class AppDB extends Dexie {
     super('AppDB');
     this.version(1).stores({
       dials: '++id, groupId, url, title, thumbSourceType',
-      groups: '++id, name, order',
+      groups: '++id, name, order, is_selected',
     });
   }
 

@@ -25,6 +25,7 @@ export const createGroupSlice: StateCreator<GroupSlice> = set => ({
       pos: 0, // Default order, can be adjusted later
       createdAt: new Date(),
       updatedAt: new Date(),
+      is_selected: false,
     };
 
     const id = await db.groups.add(newGroup);

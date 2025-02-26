@@ -15,6 +15,7 @@ export interface DialSlice {
   addGroup: (name: string) => Promise<number>;
   updateGroup: (id: number, updates: Partial<GroupItem>) => Promise<void>;
   deleteGroup: (id: number) => Promise<void>;
+  setSelectedGroup: (id: number) => Promise<void>;
 }
 
 export const createDialSlice: StateCreator<DialSlice> = (set, get) => ({
@@ -90,6 +91,7 @@ export const createDialSlice: StateCreator<DialSlice> = (set, get) => ({
     const newGroup: GroupItem = {
       name,
       pos: maxPos + 1,
+      is_selected: false,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -122,6 +124,22 @@ export const createDialSlice: StateCreator<DialSlice> = (set, get) => ({
 
     set(state => ({
       groups: state.groups.filter(group => group.id !== id),
+    }));
+  },
+
+  setSelectedGroup: async id => {
+    // First, update all groups to be not selected
+    await db.transaction('rw', db.groups, async () => {
+      await db.groups.toCollection().modify({ is_selected: false });
+      await db.groups.update(id, { is_selected: true });
+    });
+
+    // Update the state
+    set(state => ({
+      groups: state.groups.map(group => ({
+        ...group,
+        is_selected: group.id === id,
+      })),
     }));
   },
 });
