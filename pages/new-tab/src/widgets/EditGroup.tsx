@@ -3,21 +3,21 @@ import { DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/compon
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { GroupItem } from '@src/models';
+import { useBearStore } from '@src/store';
 import { useState } from 'react';
 
 interface EditGroupProps {
   group: GroupItem;
-  onUpdate: (updatedGroup: GroupItem) => void;
   setIsEditGroupDialogOpen: (open: boolean) => void;
 }
 
-const EditGroup: React.FC<EditGroupProps> = ({ group, onUpdate, setIsEditGroupDialogOpen }) => {
-  // const [isEditGroupDialogOpen, setIsEditGroupDialogOpen] = useState(false);
+const EditGroup: React.FC<EditGroupProps> = ({ group, setIsEditGroupDialogOpen }) => {
   const [groupName, setGroupName] = useState(group.name);
+  const { updateGroup } = useBearStore();
 
-  const handleUpdateGroup = () => {
+  const handleUpdateGroup = async () => {
     if (groupName.trim()) {
-      onUpdate({ ...group, name: groupName });
+      await updateGroup(group.id!, { name: groupName });
       setGroupName('');
       setIsEditGroupDialogOpen(false);
     }

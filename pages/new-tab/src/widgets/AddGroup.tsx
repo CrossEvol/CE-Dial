@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useBearStore } from '@/store';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 
@@ -19,18 +20,27 @@ const AddGroup: React.FC<AddGroupProps> = ({
   // Use internal state if external state is not provided
   const [internalOpen, setInternalOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
-  const [addPosition, setAddPosition] = useState('bottom');
+  const [addPosition, setAddPosition] = useState<'top' | 'bottom'>('bottom');
+
+  // Get the addGroup function from the store
+  const { addGroup } = useBearStore();
 
   // Use external or internal state based on what's provided
   const isAddGroupDialogOpen = externalOpen !== undefined ? externalOpen : internalOpen;
   const setIsAddGroupDialogOpen = setExternalOpen || setInternalOpen;
 
-  const handleAddGroup = () => {
+  const handleAddGroup = async () => {
     if (newGroupName.trim()) {
-      // Add logic to create a new group
-      console.log('Adding new group:', newGroupName, 'at position:', addPosition);
-      setNewGroupName('');
-      setIsAddGroupDialogOpen(false);
+      try {
+        // Call the addGroup function from the store
+        await addGroup(newGroupName.trim(), addPosition);
+
+        // Reset form and close dialog
+        setNewGroupName('');
+        setIsAddGroupDialogOpen(false);
+      } catch (error) {
+        console.error('Error adding group:', error);
+      }
     }
   };
 
@@ -62,7 +72,10 @@ const AddGroup: React.FC<AddGroupProps> = ({
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right">Add To</Label>
-              <RadioGroup value={addPosition} onValueChange={setAddPosition} className="col-span-3 flex gap-4">
+              <RadioGroup
+                value={addPosition}
+                onValueChange={setAddPosition as (value: string) => void}
+                className="col-span-3 flex gap-4">
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="top" id="top" />
                   <Label htmlFor="top">Top</Label>

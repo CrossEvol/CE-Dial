@@ -58,8 +58,8 @@ const NewTab = () => {
   const [isManageGroupDialogOpen, setIsManageGroupDialogOpen] = useState(false);
   const [selectedGroupForEdit, setSelectedGroupForEdit] = useState<GroupItem | null>(null);
 
-  // Get groups, dials, and the new setSelectedGroup method from the store
-  const { groups, dials, fetchGroups, fetchDials, setSelectedGroup } = useBearStore();
+  // Get groups, dials, and the necessary methods from the store
+  const { groups, dials, fetchGroups, fetchDials, setSelectedGroup, deleteGroup } = useBearStore();
 
   // Fetch groups and dials on component mount
   useEffect(() => {
@@ -120,9 +120,27 @@ const NewTab = () => {
     console.log('Delete bookmark:', bookmark.title);
   };
 
-  const handleDeleteGroup = (groupId: number) => {
-    // Add logic to delete a group
-    console.log('Deleting group:', groupId);
+  const handleDeleteGroup = async (groupId: number) => {
+    // Check if this is the last group
+    if (groups.length <= 1) {
+      alert("You can't delete the last group. At least one group must exist.");
+      return;
+    }
+
+    // Confirm deletion
+    if (window.confirm('Are you sure you want to delete this group?\nAll bookmarks in this group will be deleted.')) {
+      await deleteGroup(groupId);
+
+      // If the deleted group was selected, select another group
+      const wasSelected = groups.find(g => g.id === groupId)?.is_selected;
+      if (wasSelected && groups.length > 0) {
+        // Find the first available group that's not the one being deleted
+        const nextGroup = groups.find(g => g.id !== groupId);
+        if (nextGroup) {
+          setSelectedGroup(nextGroup.id!);
+        }
+      }
+    }
   };
 
   // Get the selected group ID
@@ -130,13 +148,6 @@ const NewTab = () => {
 
   // Filter dials based on selected group
   const filteredDials = selectedGroupId ? dials.filter(dial => dial.groupId === selectedGroupId) : dials;
-
-  const handleUpdateGroup = (updatedGroup: GroupItem) => {
-    // Logic to update the group in your state/store
-    console.log('Updated group:', updatedGroup);
-    setSelectedGroupForEdit(null);
-    setIsEditGroupDialogOpen(false);
-  };
 
   const handleEditGroup = (group: GroupItem) => {
     setSelectedGroupForEdit(group);
@@ -172,7 +183,7 @@ const NewTab = () => {
                 </ContextMenuCheckboxItem>
                 <ContextMenuSeparator />
                 <ContextMenuItem onClick={() => handleEditGroup(group)}>Edit</ContextMenuItem>
-                <ContextMenuItem onClick={() => console.log('Move group:', group.id)}>Delete</ContextMenuItem>
+                <ContextMenuItem onClick={() => handleDeleteGroup(group.id!)}>Delete</ContextMenuItem>
                 <ContextMenuSeparator />
                 <ContextMenuItem onClick={() => setIsManageGroupDialogOpen(true)}>Manage Groups</ContextMenuItem>
                 <ContextMenuItem disabled onClick={() => handleDeleteGroup(group.id!)}>
@@ -249,11 +260,7 @@ const NewTab = () => {
 
       <Dialog open={isEditGroupDialogOpen} onOpenChange={setIsEditGroupDialogOpen}>
         {selectedGroupForEdit && (
-          <EditGroup
-            group={selectedGroupForEdit}
-            onUpdate={handleUpdateGroup}
-            setIsEditGroupDialogOpen={setIsEditGroupDialogOpen}
-          />
+          <EditGroup group={selectedGroupForEdit} setIsEditGroupDialogOpen={setIsEditGroupDialogOpen} />
         )}
       </Dialog>
 

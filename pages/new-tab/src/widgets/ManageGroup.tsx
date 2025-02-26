@@ -25,6 +25,11 @@ const ManageGroup: React.FC<ManageGroupProps> = ({
   const [showAddGroupForm, setShowAddGroupForm] = useState(false);
   const setSelectedGroup = useBearStore(state => state.setSelectedGroup);
 
+  const handleDelete = (groupId: number) => {
+    // Don't close the dialog immediately when deleting
+    handleDeleteGroup(groupId);
+  };
+
   return (
     <DialogContent className="sm:max-w-md">
       <DialogHeader>
@@ -49,7 +54,12 @@ const ManageGroup: React.FC<ManageGroupProps> = ({
               <Button variant="outline" size="icon" onClick={() => onEditGroup && onEditGroup(group)}>
                 <Edit className="h-4 w-4" />
               </Button>
-              <Button variant="destructive" size="icon" onClick={() => handleDeleteGroup(group.id!)}>
+              <Button
+                variant="destructive"
+                size="icon"
+                onClick={() => handleDelete(group.id!)}
+                disabled={groups.length <= 1} // Disable if it's the last group
+                title={groups.length <= 1 ? 'Cannot delete the last group' : 'Delete group'}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
