@@ -10,6 +10,7 @@ export interface GroupSlice {
   updateGroup: (id: number, updates: Partial<GroupItem>) => Promise<void>;
   deleteGroup: (id: number) => Promise<void>;
   setSelectedGroup: (id: number) => Promise<void>;
+  reorderGroups: (reorderedGroups: GroupItem[]) => Promise<void>;
 }
 
 export const createGroupSlice: StateCreator<GroupSlice> = set => ({
@@ -93,5 +94,27 @@ export const createGroupSlice: StateCreator<GroupSlice> = set => ({
         is_selected: group.id === id,
       })),
     }));
+  },
+
+  reorderGroups: async reorderedGroups => {
+    // Update positions in database based on the new order
+    await db.transaction('rw', db.groups, async () => {
+      for (let i = 0; i < reorderedGroups.length; i++) {
+        const group = reorderedGroups[i];
+        await db.groups.update(group.id!, {
+          pos: i,
+          updatedAt: new Date(),
+        });
+      }
+    });
+
+    // Update the state with the new order
+    set({
+      groups: reorderedGroups.map((group, index) => ({
+        ...group,
+        pos: index,
+        updatedAt: new Date(),
+      })),
+    });
   },
 });
