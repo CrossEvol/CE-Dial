@@ -187,26 +187,12 @@ const ManageGroup: React.FC<ManageGroupProps> = ({
           </DragOverlay> */}
         </DndContext>
       </div>
-      <DialogFooter>
+      <DialogFooter className="sm:justify-start">
         {showAddGroupForm ? (
           <AddGroup isAddGroupDialogOpen={showAddGroupForm} setIsAddGroupDialogOpen={setShowAddGroupForm} />
         ) : (
           <Button onClick={() => setShowAddGroupForm(true)}>Add Group</Button>
         )}
-        <Button
-          variant="outline"
-          onClick={() => {
-            // Ensure any pending changes are saved
-            if (JSON.stringify(groups.map(g => g.id)) !== JSON.stringify(sortableGroups.map(g => g.id))) {
-              reorderGroups(sortableGroups);
-            }
-            setIsManageGroupDialogOpen(false);
-          }}>
-          Save
-        </Button>
-        <Button variant="outline" onClick={() => setIsManageGroupDialogOpen(false)}>
-          Close
-        </Button>
       </DialogFooter>
     </DialogContent>
   );

@@ -11,6 +11,7 @@ export interface DialSlice {
   updateDial: (id: number, updates: Partial<DialItem>) => Promise<void>;
   deleteDial: (id: number) => Promise<void>;
   incrementClickCount: (id: number) => Promise<void>;
+  reorderDials: (reorderedDials: DialItem[]) => Promise<void>;
 }
 
 export const createDialSlice: StateCreator<DialSlice> = (set, get) => ({
@@ -70,5 +71,25 @@ export const createDialSlice: StateCreator<DialSlice> = (set, get) => ({
         dials: state.dials.map(d => (d.id === id ? { ...d, clickCount: newClickCount } : d)),
       }));
     }
+  },
+
+  reorderDials: async reorderedDials => {
+    await db.transaction('rw', db.dials, async () => {
+      for (let i = 0; i < reorderedDials.length; i++) {
+        const dial = reorderedDials[i];
+        await db.dials.update(dial.id!, {
+          pos: i,
+          updatedAt: new Date(),
+        });
+      }
+    });
+
+    set({
+      dials: reorderedDials.map((dial, index) => ({
+        ...dial,
+        pos: index,
+        updatedAt: new Date(),
+      })),
+    });
   },
 });

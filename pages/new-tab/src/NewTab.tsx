@@ -24,8 +24,24 @@ import ManageGroup from './widgets/ManageGroup';
 
 // Import Dialog components
 import { Dialog } from '@/components/ui/dialog';
-import type { GroupItem } from './models';
+import type { DialItem, GroupItem } from './models';
+import { AddDial } from './widgets/AddDial';
+import EditDial from './widgets/EditDial';
 import EditGroup from './widgets/EditGroup';
+
+// Import dnd-kit components
+import {
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core';
+import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import { SortableItem } from './widgets/sortable-item';
 
 // Sample bookmark data with default bookmark at the end
 const bookmarks = [
@@ -58,8 +74,29 @@ const NewTab = () => {
   const [isManageGroupDialogOpen, setIsManageGroupDialogOpen] = useState(false);
   const [selectedGroupForEdit, setSelectedGroupForEdit] = useState<GroupItem | null>(null);
 
+  // Add new state for editing dials
+  const [isEditDialDialogOpen, setIsEditDialDialogOpen] = useState(false);
+  const [selectedDialForEdit, setSelectedDialForEdit] = useState<DialItem | null>(null);
+
+  // Add state for drag and drop
+  const [isDragging, setIsDragging] = useState(false);
+  const [draggingDial, setDraggingDial] = useState<DialItem | null>(null);
+
   // Get groups, dials, and the necessary methods from the store
-  const { groups, dials, fetchGroups, fetchDials, setSelectedGroup, deleteGroup } = useBearStore();
+  const { groups, dials, fetchGroups, fetchDials, setSelectedGroup, deleteGroup, reorderDials } = useBearStore();
+
+  // Set up sensors for drag and drop
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      // Add activationConstraint to prevent interference with button clicks
+      activationConstraint: {
+        distance: 5, // Only start dragging after moving 5px
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
 
   // Fetch groups and dials on component mount
   useEffect(() => {
@@ -109,8 +146,13 @@ const NewTab = () => {
   const handleEdit = (e: React.MouseEvent, bookmark: BookMarkItem) => {
     e.preventDefault();
     e.stopPropagation();
-    // Add edit logic here
-    console.log('Edit bookmark:', bookmark.title);
+
+    // Find the corresponding dial item
+    const dialToEdit = dials.find(dial => dial.id === bookmark.id);
+    if (dialToEdit) {
+      setSelectedDialForEdit(dialToEdit);
+      setIsEditDialDialogOpen(true);
+    }
   };
 
   const handleDelete = (e: React.MouseEvent, bookmark: BookMarkItem) => {
@@ -153,6 +195,35 @@ const NewTab = () => {
     setSelectedGroupForEdit(group);
     setIsEditGroupDialogOpen(true);
     setIsManageGroupDialogOpen(false); // Close the manage dialog when opening edit dialog
+  };
+
+  // Handle drag start
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    setIsDragging(true);
+    const draggedDial = dials.find(dial => dial.id === Number(active.id));
+    if (draggedDial) {
+      setDraggingDial(draggedDial);
+    }
+  };
+
+  // Handle drag end
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const updatedDials = arrayMove(
+        filteredDials,
+        filteredDials.findIndex(item => item.id === Number(active.id)),
+        filteredDials.findIndex(item => item.id === Number(over.id)),
+      );
+
+      // Save the new order to the database
+      reorderDials(updatedDials);
+    }
+
+    setIsDragging(false);
+    setDraggingDial(null);
   };
 
   return (
@@ -220,31 +291,67 @@ const NewTab = () => {
 
       {/* Bookmarks grid */}
       <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {filteredDials.length > 0 ? (
-            filteredDials.map(dial => (
-              <Bookmark
-                key={dial.id}
-                bookmark={{
-                  title: dial.title,
-                  url: dial.url,
-                  isDefault: false,
-                  IconComponent: getIconForUrl(dial.url),
-                  clickCount: dial.clickCount,
-                }}
-                isLight={isLight}
-                bookmarkStats={{ [dial.url]: dial.clickCount }}
-                onBookmarkClick={handleBookmarkClick}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-              />
-            ))
-          ) : (
-            <div className={`col-span-6 text-center py-8 ${isLight ? 'text-gray-500' : 'text-gray-400'}`}>
-              No bookmarks in this group. Add some to get started!
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}>
+          <SortableContext items={filteredDials.map(dial => dial.id!.toString())} strategy={rectSortingStrategy}>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {filteredDials.length > 0 ? (
+                <>
+                  {filteredDials.map(dial => (
+                    <SortableItem key={dial.id} id={dial.id!.toString()}>
+                      {({ listeners }) => (
+                        <div {...listeners}>
+                          <Bookmark
+                            bookmark={{
+                              id: dial.id,
+                              title: dial.title,
+                              url: dial.url,
+                              isDefault: false,
+                              IconComponent: getIconForUrl(dial.url),
+                              clickCount: dial.clickCount,
+                              thumbSourceType: dial.thumbSourceType,
+                              thumbUrl: dial.thumbUrl,
+                              thumbData: dial.thumbData,
+                              thumbIndex: dial.thumbIndex,
+                            }}
+                            isLight={isLight}
+                            bookmarkStats={{ [dial.url]: dial.clickCount }}
+                            onBookmarkClick={handleBookmarkClick}
+                            onEdit={handleEdit}
+                            onDelete={handleDelete}
+                            shouldRender={true}
+                          />
+                        </div>
+                      )}
+                    </SortableItem>
+                  ))}
+                  <AddDial>
+                    <div className="cursor-pointer flex flex-col items-center justify-center p-4 rounded-lg border-2 border-dashed h-32 w-full">
+                      <Plus size={24} className={isLight ? 'text-gray-600' : 'text-gray-300'} />
+                      <span className={`mt-2 text-sm ${isLight ? 'text-gray-600' : 'text-gray-300'}`}>
+                        Add Bookmark
+                      </span>
+                    </div>
+                  </AddDial>
+                </>
+              ) : (
+                <>
+                  <AddDial>
+                    <div className="cursor-pointer flex flex-col items-center justify-center p-4 rounded-lg border-2 border-dashed h-32 w-full">
+                      <Plus size={24} className={isLight ? 'text-gray-600' : 'text-gray-300'} />
+                      <span className={`mt-2 text-sm ${isLight ? 'text-gray-600' : 'text-gray-300'}`}>
+                        Add Bookmark
+                      </span>
+                    </div>
+                  </AddDial>
+                </>
+              )}
             </div>
-          )}
-        </div>
+          </SortableContext>
+        </DndContext>
       </div>
 
       {/* Dialogs */}
@@ -262,6 +369,11 @@ const NewTab = () => {
         {selectedGroupForEdit && (
           <EditGroup group={selectedGroupForEdit} setIsEditGroupDialogOpen={setIsEditGroupDialogOpen} />
         )}
+      </Dialog>
+
+      {/* Add dialog for editing dials */}
+      <Dialog open={isEditDialDialogOpen} onOpenChange={setIsEditDialDialogOpen}>
+        {selectedDialForEdit && <EditDial dial={selectedDialForEdit} setIsEditDialogOpen={setIsEditDialDialogOpen} />}
       </Dialog>
 
       {/* Theme toggle - keeping this from original code */}

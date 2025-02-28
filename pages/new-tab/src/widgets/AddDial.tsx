@@ -8,29 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import type { ThumbSourceType } from '@/models';
 import { useBearStore } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  Camera,
-  ClipboardCopy,
-  ClipboardPaste,
-  Copy,
-  Download,
-  Edit,
-  FileCheck,
-  FileEdit,
-  FilePlus,
-  FileText,
-  Home,
-  Link,
-  Mail,
-  Save,
-  Search,
-  Settings,
-  Share,
-  Trash,
-  Upload,
-  User,
-} from 'lucide-react';
-import { useState } from 'react';
+import type { IconData } from '@src/lib/defaultIcons';
+import { defaultIcons } from '@src/lib/defaultIcons';
+import { useEffect, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -45,40 +25,11 @@ export const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-interface AddFormProps {
+interface AddDialProps {
   children?: React.ReactNode;
 }
 
-// Create a type for our icon data
-type IconData = {
-  icon: React.ReactNode;
-  name: string;
-};
-
-const defaultIcons: IconData[] = [
-  { icon: <Camera size={24} />, name: 'Camera' },
-  { icon: <Share size={24} />, name: 'Share' },
-  { icon: <ClipboardCopy size={24} />, name: 'Copy' },
-  { icon: <ClipboardPaste size={24} />, name: 'Paste' },
-  { icon: <FileText size={24} />, name: 'File' },
-  { icon: <FilePlus size={24} />, name: 'Add File' },
-  { icon: <FileEdit size={24} />, name: 'Edit File' },
-  { icon: <FileCheck size={24} />, name: 'Check File' },
-  { icon: <Download size={24} />, name: 'Download' },
-  { icon: <Upload size={24} />, name: 'Upload' },
-  { icon: <Save size={24} />, name: 'Save' },
-  { icon: <Trash size={24} />, name: 'Delete' },
-  { icon: <Edit size={24} />, name: 'Edit' },
-  { icon: <Copy size={24} />, name: 'Copy' },
-  { icon: <Link size={24} />, name: 'Link' },
-  { icon: <Search size={24} />, name: 'Search' },
-  { icon: <Settings size={24} />, name: 'Settings' },
-  { icon: <User size={24} />, name: 'User' },
-  { icon: <Mail size={24} />, name: 'Mail' },
-  { icon: <Home size={24} />, name: 'Home' },
-];
-
-export function AddForm({ children }: AddFormProps) {
+export function AddDial({ children }: AddDialProps) {
   const [previewFile, setPreviewFile] = useState<(File & { preview: string }) | null>(null);
   const [selectedIcon, setSelectedIcon] = useState<IconData | null>(null);
 
@@ -87,7 +38,7 @@ export function AddForm({ children }: AddFormProps) {
     defaultValues: {
       url: '',
       title: '',
-      group: 'Default',
+      group: '1',
       previewType: 'auto',
       previewUrl: '',
     },
@@ -95,15 +46,23 @@ export function AddForm({ children }: AddFormProps) {
 
   const addDial = useBearStore(state => state.addDial);
   const groups = useBearStore(state => state.groups);
+  const fetchGroups = useBearStore(state => state.fetchGroups);
+
+  useEffect(() => {
+    fetchGroups();
+  }, [fetchGroups]);
 
   const onSubmit = async (data: FormValues) => {
     console.log('Form submitted:', data);
 
+    // Remove URL prefixes (http://, https://, etc.)
+    const cleanUrl = data.url.replace(/^(https?:\/\/|ftp:\/\/|mailto:|file:\/\/|data:)/, '');
+
     // Prepare the dial data based on the form values
     const dialData = {
-      url: data.url,
+      url: cleanUrl,
       title: data.title,
-      groupId: parseInt(data.group), // Assuming group is stored as the ID
+      groupId: parseInt(data.group),
       thumbSourceType: data.previewType as ThumbSourceType,
       thumbUrl: '',
       thumbData: '',
@@ -113,9 +72,20 @@ export function AddForm({ children }: AddFormProps) {
 
     // Add additional data based on the preview type
     if (data.previewType === 'remote' && data.previewUrl) {
+      // Store both the URL and convert the remote image to base64
       dialData.thumbUrl = data.previewUrl;
-    } else if (data.previewType === 'upload' && previewFile) {
-      dialData.thumbData = previewFile.preview;
+
+      try {
+        // Fetch the image and convert to base64
+        const base64Data = await fetchImageAsBase64(data.previewUrl);
+        dialData.thumbData = base64Data;
+      } catch (error) {
+        console.error('Error fetching remote image:', error);
+        // Keep the URL as fallback
+      }
+    } else if (data.previewType === 'upload' && data.previewUrl) {
+      // For upload type, we use the base64 data directly from the form
+      dialData.thumbData = data.previewUrl;
     } else if (data.previewType === 'default' && selectedIcon) {
       // Find the index of the selected icon in the defaultIcons array
       const iconIndex = defaultIcons.findIndex(icon => icon.name === selectedIcon.name);
@@ -138,19 +108,55 @@ export function AddForm({ children }: AddFormProps) {
     }
   };
 
+  // Helper function to fetch an image and convert it to base64
+  const fetchImageAsBase64 = async (url: string): Promise<string> => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      console.error('Error converting image to base64:', error);
+      throw error;
+    }
+  };
+
   const previewType = form.watch('previewType');
 
   const { getRootProps, getInputProps } = useDropzone({
-    onDrop: (acceptedFiles: File[]) => {
+    onDrop: async (acceptedFiles: File[]) => {
       const file = acceptedFiles[0];
+
+      // Create a preview URL for display
+      const previewUrl = URL.createObjectURL(file);
+
+      // Convert the file to base64 for storage
+      const base64Data = await fileToBase64(file);
+
       setPreviewFile(
         Object.assign(file, {
-          preview: URL.createObjectURL(file),
+          preview: previewUrl,
         }),
       );
-      form.setValue('previewUrl', URL.createObjectURL(file));
+
+      // Store the base64 data in the form
+      form.setValue('previewUrl', base64Data);
     },
   });
+
+  // Helper function to convert File to base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
+  };
 
   const handleIconSelect = (icon: IconData) => {
     setSelectedIcon(prev => (prev?.name === icon.name ? null : icon));
@@ -189,12 +195,6 @@ export function AddForm({ children }: AddFormProps) {
                   Upload Image
                 </Button>
               </div>
-              {/* Optional: Add submit button if needed */}
-              {previewFile && (
-                <Button type="button" variant="default" onClick={() => console.log('Submit clicked')}>
-                  Submit
-                </Button>
-              )}
             </div>
             {previewFile ? (
               <img
@@ -300,9 +300,15 @@ export function AddForm({ children }: AddFormProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Default">Default</SelectItem>
-                      <SelectItem value="Work">Work</SelectItem>
-                      <SelectItem value="Personal">Personal</SelectItem>
+                      {groups.length > 0 ? (
+                        groups.map(group => (
+                          <SelectItem key={group.id} value={String(group.id)}>
+                            {group.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="1">Default</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </FormItem>
