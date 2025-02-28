@@ -33,6 +33,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import { Droppable } from './widgets/droppable';
 import GroupWidget from './widgets/GroupWidget';
 import { SortableItem } from './widgets/sortable-item';
 
@@ -56,6 +57,16 @@ interface BookmarkStats {
   [key: string]: number;
 }
 
+const GROUP = 'group::';
+
+function groupKey(id: number | string) {
+  return `${GROUP}${id}`;
+}
+
+function isGroupKey(key: string) {
+  return key.includes(GROUP);
+}
+
 const NewTab = () => {
   const theme = useStorage(exampleThemeStorage);
   const isLight = theme === 'light';
@@ -76,7 +87,8 @@ const NewTab = () => {
   const [draggingDial, setDraggingDial] = useState<DialItem | null>(null);
 
   // Get groups, dials, and the necessary methods from the store
-  const { groups, dials, fetchGroups, fetchDials, setSelectedGroup, deleteGroup, reorderDials } = useBearStore();
+  const { groups, dials, fetchGroups, fetchDials, setSelectedGroup, deleteGroup, reorderDials, updateDial } =
+    useBearStore();
 
   // Set up sensors for drag and drop
   const sensors = useSensors(
@@ -204,7 +216,27 @@ const NewTab = () => {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
-    if (over && active.id !== over.id) {
+    if (over && isGroupKey(over?.id as string)) {
+      // Extract group ID from the over.id (format: "group::123")
+      const groupIdString = (over.id as string).replace(GROUP, '');
+      const destGroupId = parseInt(groupIdString, 10);
+
+      // Get the active dial's ID
+      const dialId = Number(active.id);
+      const dialToMove = dials.find(dial => dial.id === dialId);
+
+      if (dialToMove && destGroupId !== dialToMove.groupId) {
+        // Find the maximum position in the destination group
+        const dialsInDestGroup = dials.filter(dial => dial.groupId === destGroupId);
+        const maxPos = dialsInDestGroup.length > 0 ? Math.max(...dialsInDestGroup.map(d => d.pos || 0)) + 1 : 0;
+
+        // Update the dial with new groupId and position
+        updateDial(dialId, {
+          groupId: destGroupId,
+          pos: maxPos,
+        });
+      }
+    } else if (over && active.id !== over.id) {
       const updatedDials = arrayMove(
         filteredDials,
         filteredDials.findIndex(item => item.id === Number(active.id)),
@@ -221,54 +253,56 @@ const NewTab = () => {
 
   return (
     <div className={`min-h-screen p-8 ${isLight ? 'bg-slate-50' : 'bg-gray-800'}`}>
-      {/* Groups navigation */}
-      <div className="max-w-6xl mx-auto mb-6">
-        <div className="flex space-x-1 overflow-x-auto pb-2">
-          {groups.map(group => (
-            <GroupWidget
-              key={group.id}
-              group={group}
-              isLight={isLight}
-              filteredDials={filteredDials}
-              setSelectedGroup={setSelectedGroup}
-              handleEditGroup={handleEditGroup}
-              handleDeleteGroup={handleDeleteGroup}
-              setIsManageGroupDialogOpen={setIsManageGroupDialogOpen}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}>
+        {/* Groups navigation */}
+        <div className="max-w-6xl mx-auto mb-6">
+          <div className="flex space-x-1 overflow-x-auto pb-2">
+            {groups.map(group => (
+              <Droppable key={groupKey(group.id!)} id={groupKey(group.id!)}>
+                <GroupWidget
+                  key={group.id}
+                  group={group}
+                  isLight={isLight}
+                  filteredDials={filteredDials}
+                  setSelectedGroup={setSelectedGroup}
+                  handleEditGroup={handleEditGroup}
+                  handleDeleteGroup={handleDeleteGroup}
+                  setIsManageGroupDialogOpen={setIsManageGroupDialogOpen}
+                />
+              </Droppable>
+            ))}
+
+            {/* Add Group Button */}
+            <AddGroup isAddGroupDialogOpen={isAddGroupDialogOpen} setIsAddGroupDialogOpen={setIsAddGroupDialogOpen} />
+          </div>
+        </div>
+
+        {/* Search bar */}
+        <div className="max-w-3xl mx-auto mb-8">
+          <div className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Enter your search..."
+              className="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-          ))}
-
-          {/* Add Group Button */}
-          <AddGroup isAddGroupDialogOpen={isAddGroupDialogOpen} setIsAddGroupDialogOpen={setIsAddGroupDialogOpen} />
+            <Button
+              variant="ghost"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2"
+              onClick={handleSearch}>
+              <SearchIcon className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
-      </div>
 
-      {/* Search bar */}
-      <div className="max-w-3xl mx-auto mb-8">
-        <div className="relative">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Enter your search..."
-            className="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <Button
-            variant="ghost"
-            className="absolute right-2 top-1/2 transform -translate-y-1/2"
-            onClick={handleSearch}>
-            <SearchIcon className="h-5 w-5" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Bookmarks grid */}
-      <div className="max-w-6xl mx-auto">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}>
+        {/* Bookmarks grid */}
+        <div className="max-w-6xl mx-auto">
           <SortableContext items={filteredDials.map(dial => dial.id!.toString())} strategy={rectSortingStrategy}>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               {filteredDials.length > 0 ? (
@@ -324,8 +358,8 @@ const NewTab = () => {
               )}
             </div>
           </SortableContext>
-        </DndContext>
-      </div>
+        </div>
+      </DndContext>
 
       {/* Dialogs */}
       <Dialog open={isManageGroupDialogOpen} onOpenChange={setIsManageGroupDialogOpen}>
