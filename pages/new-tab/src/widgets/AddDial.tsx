@@ -27,9 +27,10 @@ type FormValues = z.infer<typeof formSchema>;
 
 interface AddDialProps {
   children?: React.ReactNode;
+  selectedGroupId?: number;
 }
 
-export function AddDial({ children }: AddDialProps) {
+export function AddDial({ children, selectedGroupId }: AddDialProps) {
   const [previewFile, setPreviewFile] = useState<(File & { preview: string }) | null>(null);
   const [selectedIcon, setSelectedIcon] = useState<IconData | null>(null);
 
@@ -38,7 +39,7 @@ export function AddDial({ children }: AddDialProps) {
     defaultValues: {
       url: '',
       title: '',
-      group: '1',
+      group: selectedGroupId ? String(selectedGroupId) : '1',
       previewType: 'auto',
       previewUrl: '',
     },

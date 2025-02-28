@@ -1,12 +1,4 @@
 import { Button } from '@/components/ui/button';
-import {
-  ContextMenu,
-  ContextMenuCheckboxItem,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuSeparator,
-  ContextMenuTrigger,
-} from '@/components/ui/context-menu';
 import { useStorage, withErrorBoundary, withSuspense } from '@extension/shared';
 import { exampleThemeStorage } from '@extension/storage';
 import { ToggleButton } from '@extension/ui';
@@ -41,6 +33,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import GroupWidget from './widgets/GroupWidget';
 import { SortableItem } from './widgets/sortable-item';
 
 // Sample bookmark data with default bookmark at the end
@@ -232,36 +225,16 @@ const NewTab = () => {
       <div className="max-w-6xl mx-auto mb-6">
         <div className="flex space-x-1 overflow-x-auto pb-2">
           {groups.map(group => (
-            <ContextMenu key={group.id}>
-              <ContextMenuTrigger>
-                <button
-                  onClick={() => setSelectedGroup(group.id!)}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    group.is_selected
-                      ? isLight
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-blue-500 text-white'
-                      : isLight
-                        ? 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-                        : 'bg-gray-700 text-gray-200 hover:bg-gray-600'
-                  }`}>
-                  {group.name} ({filteredDials.filter(dial => dial.groupId === group.id).length})
-                </button>
-              </ContextMenuTrigger>
-              <ContextMenuContent>
-                <ContextMenuCheckboxItem checked={group.is_selected} onClick={() => setSelectedGroup(group.id!)}>
-                  Selected
-                </ContextMenuCheckboxItem>
-                <ContextMenuSeparator />
-                <ContextMenuItem onClick={() => handleEditGroup(group)}>Edit</ContextMenuItem>
-                <ContextMenuItem onClick={() => handleDeleteGroup(group.id!)}>Delete</ContextMenuItem>
-                <ContextMenuSeparator />
-                <ContextMenuItem onClick={() => setIsManageGroupDialogOpen(true)}>Manage Groups</ContextMenuItem>
-                <ContextMenuItem disabled onClick={() => handleDeleteGroup(group.id!)}>
-                  Delete All
-                </ContextMenuItem>
-              </ContextMenuContent>
-            </ContextMenu>
+            <GroupWidget
+              key={group.id}
+              group={group}
+              isLight={isLight}
+              filteredDials={filteredDials}
+              setSelectedGroup={setSelectedGroup}
+              handleEditGroup={handleEditGroup}
+              handleDeleteGroup={handleDeleteGroup}
+              setIsManageGroupDialogOpen={setIsManageGroupDialogOpen}
+            />
           ))}
 
           {/* Add Group Button */}
@@ -328,7 +301,7 @@ const NewTab = () => {
                       )}
                     </SortableItem>
                   ))}
-                  <AddDial>
+                  <AddDial selectedGroupId={selectedGroupId}>
                     <div className="cursor-pointer flex flex-col items-center justify-center p-4 rounded-lg border-2 border-dashed h-32 w-full">
                       <Plus size={24} className={isLight ? 'text-gray-600' : 'text-gray-300'} />
                       <span className={`mt-2 text-sm ${isLight ? 'text-gray-600' : 'text-gray-300'}`}>
@@ -339,7 +312,7 @@ const NewTab = () => {
                 </>
               ) : (
                 <>
-                  <AddDial>
+                  <AddDial selectedGroupId={selectedGroupId}>
                     <div className="cursor-pointer flex flex-col items-center justify-center p-4 rounded-lg border-2 border-dashed h-32 w-full">
                       <Plus size={24} className={isLight ? 'text-gray-600' : 'text-gray-300'} />
                       <span className={`mt-2 text-sm ${isLight ? 'text-gray-600' : 'text-gray-300'}`}>
