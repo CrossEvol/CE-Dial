@@ -1,7 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { useStorage, withErrorBoundary, withSuspense } from '@extension/shared';
 import { exampleThemeStorage } from '@extension/storage';
-import { ToggleButton } from '@extension/ui';
 import '@src/NewTab.css';
 import '@src/NewTab.scss';
 import { Facebook, Github, Plus, Twitter } from 'lucide-react';
@@ -35,6 +34,7 @@ import {
 import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { Droppable } from './widgets/droppable';
 import GroupWidget from './widgets/GroupWidget';
+import { SettingsMenu } from './widgets/SettingsMenu';
 import { SortableItem } from './widgets/sortable-item';
 
 // Sample bookmark data with default bookmark at the end
@@ -384,8 +384,8 @@ const NewTab = () => {
       </Dialog>
 
       {/* Theme toggle - keeping this from original code */}
-      <div className="fixed bottom-4 right-4">
-        <ToggleButton onClick={exampleThemeStorage.toggle}>Toggle Theme</ToggleButton>
+      <div className="w-52 fixed bottom-4 right-8">
+        <SettingsMenu />
       </div>
     </div>
   );

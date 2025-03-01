@@ -11,9 +11,13 @@ export interface GroupSlice {
   deleteGroup: (id: number) => Promise<void>;
   setSelectedGroup: (id: number) => Promise<void>;
   reorderGroups: (reorderedGroups: GroupItem[]) => Promise<void>;
+
+  // Export/Import related
+  exportGroups: () => Promise<Omit<GroupItem, 'id' | 'createdAt' | 'updatedAt'>[]>;
+  importGroups: (groups: Omit<GroupItem, 'id' | 'createdAt' | 'updatedAt'>[]) => Promise<Map<string, number>>;
 }
 
-export const createGroupSlice: StateCreator<GroupSlice> = set => ({
+export const createGroupSlice: StateCreator<GroupSlice> = (set, get) => ({
   groups: [],
 
   fetchGroups: async () => {
@@ -116,5 +120,54 @@ export const createGroupSlice: StateCreator<GroupSlice> = set => ({
         updatedAt: new Date(),
       })),
     });
+  },
+
+  // Export groups without id, createdAt, and updatedAt
+  exportGroups: async () => {
+    const groups = await db.groups.orderBy('pos').toArray();
+    return groups.map(({ id, createdAt, updatedAt, ...rest }) => rest);
+  },
+
+  // Import groups and return a mapping from group name to group id
+  importGroups: async importedGroups => {
+    const existingGroups = await db.groups.toArray();
+    const nameToIdMap = new Map<string, number>();
+
+    // Create a map of existing group names to their IDs
+    existingGroups.forEach(group => {
+      if (group.id !== undefined) {
+        nameToIdMap.set(group.name, group.id);
+      }
+    });
+
+    // Find the highest position value
+    const maxPos = existingGroups.length > 0 ? Math.max(...existingGroups.map(g => g.pos)) : -1;
+
+    // Process each imported group
+    for (let i = 0; i < importedGroups.length; i++) {
+      const group = importedGroups[i];
+
+      // If the group already exists, use its ID
+      if (nameToIdMap.has(group.name)) {
+        continue;
+      }
+
+      // Otherwise, create a new group
+      const newGroup: GroupItem = {
+        name: group.name,
+        pos: maxPos + i + 1,
+        is_selected: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const id = await db.groups.add(newGroup);
+      nameToIdMap.set(group.name, id);
+    }
+
+    // Refresh the groups in the store
+    await get().fetchGroups();
+
+    return nameToIdMap;
   },
 });
