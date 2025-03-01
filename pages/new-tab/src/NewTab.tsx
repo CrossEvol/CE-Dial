@@ -87,8 +87,20 @@ const NewTab = () => {
   const [draggingDial, setDraggingDial] = useState<DialItem | null>(null);
 
   // Get groups, dials, and the necessary methods from the store
-  const { groups, dials, fetchGroups, fetchDials, setSelectedGroup, deleteGroup, reorderDials, updateDial } =
-    useBearStore();
+  const {
+    groups,
+    dials,
+    fetchGroups,
+    fetchDials,
+    setSelectedGroup,
+    deleteGroup,
+    reorderDials,
+    updateDial,
+    getFilteredDials,
+  } = useBearStore();
+
+  // Use the filtered dials selector instead of filtering locally
+  const filteredDials = getFilteredDials();
 
   // Set up sensors for drag and drop
   const sensors = useSensors(
@@ -190,11 +202,8 @@ const NewTab = () => {
     }
   };
 
-  // Get the selected group ID
+  // We still need selectedGroupId for other parts of the component
   const selectedGroupId = groups.find(group => group.is_selected)?.id;
-
-  // Filter dials based on selected group
-  const filteredDials = selectedGroupId ? dials.filter(dial => dial.groupId === selectedGroupId) : dials;
 
   const handleEditGroup = (group: GroupItem) => {
     setSelectedGroupForEdit(group);

@@ -1,7 +1,7 @@
 import type { DialSlice, ExportedDialItem } from './dial-slice';
 import type { GroupSlice } from './group-slice';
 
-import type { GroupItem } from '@src/models';
+import type { DialItem, GroupItem } from '@src/models';
 import { type StateCreator } from 'zustand';
 
 export interface ExportDataType {
@@ -10,11 +10,25 @@ export interface ExportDataType {
 }
 
 export interface SharedSlice {
+  getFilteredDials: () => DialItem[];
   exportData: () => Promise<void>;
   importData: (data: ExportDataType) => Promise<void>;
 }
 
 export const createSharedSlice: StateCreator<BearState, [], [], SharedSlice> = (set, get) => ({
+  getFilteredDials: () => {
+    const { groups, dials } = get();
+    const selectedGroupId = groups.find(group => group.is_selected)?.id;
+
+    const filteredDials = selectedGroupId ? dials.filter(dial => dial.groupId === selectedGroupId) : dials;
+
+    return [...filteredDials].sort((a, b) => {
+      const posA = a.pos ?? Number.MAX_SAFE_INTEGER;
+      const posB = b.pos ?? Number.MAX_SAFE_INTEGER;
+      return posA - posB;
+    });
+  },
+
   exportData: async () => {
     // Get access to methods via the complete store
     const store = get();

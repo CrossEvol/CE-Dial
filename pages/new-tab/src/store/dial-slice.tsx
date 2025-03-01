@@ -93,12 +93,21 @@ export const createDialSlice: StateCreator<DialSlice> = (set, get) => ({
       }
     });
 
-    set({
-      dials: reorderedDials.map((dial, index) => ({
-        ...dial,
-        pos: index,
-        updatedAt: new Date(),
-      })),
+    // Update only the affected dials while preserving others
+    set(state => {
+      const updatedDialsMap = new Map();
+      reorderedDials.forEach((dial, index) => {
+        updatedDialsMap.set(dial.id, {
+          ...dial,
+          pos: index,
+          updatedAt: new Date(),
+        });
+      });
+
+      // Merge the updated dials with existing dials from other groups
+      return {
+        dials: state.dials.map(dial => (updatedDialsMap.has(dial.id) ? updatedDialsMap.get(dial.id) : dial)),
+      };
     });
   },
 
