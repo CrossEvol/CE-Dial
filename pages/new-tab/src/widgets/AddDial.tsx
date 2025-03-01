@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -26,11 +26,13 @@ export const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface AddDialProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   children?: React.ReactNode;
   selectedGroupId?: number;
 }
 
-export function AddDial({ children, selectedGroupId }: AddDialProps) {
+export function AddDial({ children, selectedGroupId, open, onOpenChange }: AddDialProps) {
   const [previewFile, setPreviewFile] = useState<(File & { preview: string }) | null>(null);
   const [selectedIcon, setSelectedIcon] = useState<IconData | null>(null);
 
@@ -101,11 +103,11 @@ export function AddDial({ children, selectedGroupId }: AddDialProps) {
       console.log('Dial added with ID:', id);
 
       // Close the dialog or show success message
-      // ...
+      onOpenChange(false);
     } catch (error) {
       console.error('Error adding dial:', error);
       // Show error message
-      // ...
+      window.confirm('Error adding dial.');
     }
   };
 
@@ -253,8 +255,7 @@ export function AddDial({ children, selectedGroupId }: AddDialProps) {
   };
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>{children || <Button variant="outline">Add Bookmark</Button>}</DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add Bookmark</DialogTitle>

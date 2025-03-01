@@ -73,6 +73,7 @@ const NewTab = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Dialog states
+  const [isAddDialDialogOpen, setIsAddDialDialogOpen] = useState(false);
   const [isAddGroupDialogOpen, setIsAddGroupDialogOpen] = useState(false);
   const [isEditGroupDialogOpen, setIsEditGroupDialogOpen] = useState(false);
   const [isManageGroupDialogOpen, setIsManageGroupDialogOpen] = useState(false);
@@ -344,25 +345,35 @@ const NewTab = () => {
                       )}
                     </SortableItem>
                   ))}
-                  <AddDial selectedGroupId={selectedGroupId}>
-                    <div className="cursor-pointer flex flex-col items-center justify-center p-4 rounded-lg border-2 border-dashed h-32 w-full">
-                      <Plus size={24} className={isLight ? 'text-gray-600' : 'text-gray-300'} />
-                      <span className={`mt-2 text-sm ${isLight ? 'text-gray-600' : 'text-gray-300'}`}>
-                        Add Bookmark
-                      </span>
-                    </div>
-                  </AddDial>
+                  <div
+                    role="button"
+                    onKeyPress={() => {}}
+                    tabIndex={0}
+                    className="cursor-pointer flex flex-col items-center justify-center p-4 rounded-lg border-2 border-dashed h-32 w-full"
+                    onClick={() => setIsAddDialDialogOpen(true)}>
+                    <Plus size={24} className={isLight ? 'text-gray-600' : 'text-gray-300'} />
+                    <span className={`mt-2 text-sm ${isLight ? 'text-gray-600' : 'text-gray-300'}`}>Add Bookmark</span>
+                  </div>
+                  <AddDial
+                    selectedGroupId={selectedGroupId}
+                    open={isAddDialDialogOpen}
+                    onOpenChange={setIsAddDialDialogOpen}></AddDial>
                 </>
               ) : (
                 <>
-                  <AddDial selectedGroupId={selectedGroupId}>
-                    <div className="cursor-pointer flex flex-col items-center justify-center p-4 rounded-lg border-2 border-dashed h-32 w-full">
-                      <Plus size={24} className={isLight ? 'text-gray-600' : 'text-gray-300'} />
-                      <span className={`mt-2 text-sm ${isLight ? 'text-gray-600' : 'text-gray-300'}`}>
-                        Add Bookmark
-                      </span>
-                    </div>
-                  </AddDial>
+                  <div
+                    role="button"
+                    onKeyPress={() => {}}
+                    tabIndex={0}
+                    className="cursor-pointer flex flex-col items-center justify-center p-4 rounded-lg border-2 border-dashed h-32 w-full"
+                    onClick={() => setIsAddDialDialogOpen(true)}>
+                    <Plus size={24} className={isLight ? 'text-gray-600' : 'text-gray-300'} />
+                    <span className={`mt-2 text-sm ${isLight ? 'text-gray-600' : 'text-gray-300'}`}>Add Bookmark</span>
+                  </div>
+                  <AddDial
+                    selectedGroupId={selectedGroupId}
+                    open={isAddDialDialogOpen}
+                    onOpenChange={setIsAddDialDialogOpen}></AddDial>
                 </>
               )}
             </div>
