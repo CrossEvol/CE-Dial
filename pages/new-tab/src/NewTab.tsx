@@ -6,7 +6,6 @@ import '@src/NewTab.scss';
 import { Facebook, Github, Plus, Twitter } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useBearStore } from './store';
-import type { BookMarkItem } from './widgets/BookMark';
 import { Bookmark } from './widgets/BookMark';
 
 // Import the new components
@@ -37,26 +36,6 @@ import GroupWidget from './widgets/GroupWidget';
 import { SettingsMenu } from './widgets/SettingsMenu';
 import { SortableItem } from './widgets/sortable-item';
 
-// Sample bookmark data with default bookmark at the end
-const bookmarks = [
-  { title: 'GitHub', url: 'github.com', isDefault: false, IconComponent: Github, clickCount: 0 },
-  { title: 'Facebook', url: 'https://www.facebook.com/', isDefault: false, IconComponent: Facebook, clickCount: 0 },
-  { title: 'Twitter', url: 'https://x.com/', isDefault: false, IconComponent: Twitter, clickCount: 0 },
-  {
-    title: 'Default',
-    url: 'example.com',
-    isDefault: true,
-    IconComponent: Plus,
-    clickCount: 0,
-  },
-  // Add more bookmarks as needed
-];
-
-// Add this type definition at the top of the file
-interface BookmarkStats {
-  [key: string]: number;
-}
-
 const GROUP = 'group::';
 
 function groupKey(id: number | string) {
@@ -84,8 +63,8 @@ const NewTab = () => {
   const [selectedDialForEdit, setSelectedDialForEdit] = useState<DialItem | null>(null);
 
   // Add state for drag and drop
-  const [isDragging, setIsDragging] = useState(false);
-  const [draggingDial, setDraggingDial] = useState<DialItem | null>(null);
+  const [_isDragging, setIsDragging] = useState(false);
+  const [_draggingDial, setDraggingDial] = useState<DialItem | null>(null);
 
   // Get groups, dials, and the necessary methods from the store
   const {
@@ -129,17 +108,6 @@ const NewTab = () => {
     }
   }, [groups, setSelectedGroup]);
 
-  // Update the bookmarkStats state definition
-  const [bookmarkStats, setBookmarkStats] = useState<BookmarkStats>(
-    bookmarks.reduce(
-      (acc, bookmark) => ({
-        ...acc,
-        [bookmark.url]: bookmark.clickCount,
-      }),
-      {} as BookmarkStats,
-    ),
-  );
-
   const handleSearch = () => {
     if (searchQuery.trim()) {
       const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
@@ -151,33 +119,6 @@ const NewTab = () => {
     if (e.key === 'Enter') {
       handleSearch();
     }
-  };
-
-  const handleBookmarkClick = (url: string) => {
-    setBookmarkStats(prev => ({
-      ...prev,
-      [url]: (prev[url] || 0) + 1,
-    }));
-    window.open(`https://${url}`, '_blank');
-  };
-
-  const handleEdit = (e: React.MouseEvent, bookmark: BookMarkItem) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    // Find the corresponding dial item
-    const dialToEdit = dials.find(dial => dial.id === bookmark.id);
-    if (dialToEdit) {
-      setSelectedDialForEdit(dialToEdit);
-      setIsEditDialDialogOpen(true);
-    }
-  };
-
-  const handleDelete = (e: React.MouseEvent, bookmark: BookMarkItem) => {
-    e.preventDefault();
-    e.stopPropagation();
-    // Add delete logic here
-    console.log('Delete bookmark:', bookmark.title);
   };
 
   const handleDeleteGroup = async (groupId: number) => {
@@ -261,6 +202,12 @@ const NewTab = () => {
     setDraggingDial(null);
   };
 
+  // Handle opening the edit dialog for a dial
+  const handleEditDialOpen = (dialToEdit: DialItem) => {
+    setSelectedDialForEdit(dialToEdit);
+    setIsEditDialDialogOpen(true);
+  };
+
   return (
     <div className={`min-h-screen p-8 ${isLight ? 'bg-slate-50' : 'bg-gray-800'}`}>
       <DndContext
@@ -334,12 +281,7 @@ const NewTab = () => {
                               thumbData: dial.thumbData,
                               thumbIndex: dial.thumbIndex,
                             }}
-                            isLight={isLight}
-                            bookmarkStats={{ [dial.url]: dial.clickCount }}
-                            onBookmarkClick={handleBookmarkClick}
-                            onEdit={handleEdit}
-                            onDelete={handleDelete}
-                            shouldRender={true}
+                            onEditDialOpen={handleEditDialOpen}
                           />
                         </div>
                       )}

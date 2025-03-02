@@ -1,6 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import type { ThumbSourceType } from '@/models/DialItem';
+import type { DialItem, ThumbSourceType } from '@/models/DialItem';
+import { useStorage } from '@extension/shared';
+import { exampleThemeStorage } from '@extension/storage';
 import { defaultIcons } from '@src/lib/defaultIcons';
 import { useBearStore } from '@src/store';
 import { Edit2, MousePointerClick, Trash2 } from 'lucide-react';
@@ -21,26 +23,43 @@ export type BookMarkItem = {
 
 interface BookmarkProps {
   bookmark: BookMarkItem;
-  isLight: boolean;
-  shouldRender: boolean;
-  bookmarkStats: { [key: string]: number };
-  onBookmarkClick: (url: string) => void;
-  onEdit: (e: React.MouseEvent, bookmark: BookmarkProps['bookmark']) => void;
-  onDelete: (e: React.MouseEvent, bookmark: BookmarkProps['bookmark']) => void;
+  onEditDialOpen?: (dial: DialItem) => void;
   onDefaultClick?: () => void;
 }
 
-export const Bookmark: React.FC<BookmarkProps> = ({
-  bookmark,
-  isLight,
-  shouldRender,
-  bookmarkStats,
-  onBookmarkClick,
-  onEdit,
-  onDelete,
-}) => {
-  const { deleteDial } = useBearStore();
+export const Bookmark: React.FC<BookmarkProps> = ({ bookmark, onEditDialOpen }) => {
+  const theme = useStorage(exampleThemeStorage);
+  const isLight = theme === 'light';
+  const { deleteDial, dials, updateDial } = useBearStore();
 
+  // Handle bookmark click - opens the URL and updates click count
+  const handleBookmarkClick = () => {
+    if (bookmark.id) {
+      // Update click count in the store
+      updateDial(bookmark.id, {
+        clickCount: (bookmark.clickCount || 0) + 1,
+      });
+    }
+
+    // Open the URL in a new tab
+    window.open(`https://${bookmark.url}`, '_blank');
+  };
+
+  // Handle edit click
+  const handleEdit = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (bookmark.isDefault) return;
+
+    // Find the corresponding dial item
+    const dialToEdit = dials.find(dial => dial.id === bookmark.id);
+    if (dialToEdit && onEditDialOpen) {
+      onEditDialOpen(dialToEdit);
+    }
+  };
+
+  // Handle delete click
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -52,9 +71,6 @@ export const Bookmark: React.FC<BookmarkProps> = ({
       if (bookmark.id) {
         await deleteDial(bookmark.id);
       }
-
-      // Also call the parent component's onDelete handler if provided
-      onDelete(e, bookmark);
     }
   };
 
@@ -64,56 +80,54 @@ export const Bookmark: React.FC<BookmarkProps> = ({
       isLight ? 'text-gray-600 hover:text-blue-600' : 'text-gray-300 hover:text-blue-400'
     }`;
 
-    if (shouldRender) {
-      // Handle different thumbnail source types
-      if (bookmark.thumbSourceType) {
-        switch (bookmark.thumbSourceType) {
-          case 'remote':
-            // First check if we have the image data stored locally
-            if (bookmark.thumbData) {
-              return <img src={bookmark.thumbData} alt={bookmark.title} className="w-36 h-auto object-contain" />;
-            } else if (bookmark.thumbUrl) {
-              // Fallback to remote URL if no local data is available
-              return (
-                <img
-                  src={bookmark.thumbUrl}
-                  alt={bookmark.title}
-                  className="w-36 h-auto object-contain"
-                  onError={e => {
-                    // Fallback to default icon on error
-                    (e.target as HTMLImageElement).style.display = 'none';
-                    // Show default icon or placeholder
-                  }}
-                />
-              );
-            }
-            break;
-          case 'upload':
-            if (bookmark.thumbData) {
-              return <img src={bookmark.thumbData} alt={bookmark.title} className="w-36 h-auto object-contain" />;
-            }
-            break;
-          case 'default':
-            if (typeof bookmark.thumbIndex === 'number' && defaultIcons[bookmark.thumbIndex]) {
-              return <div className={`${iconClassName}`}>{defaultIcons[bookmark.thumbIndex].icon}</div>;
-            }
-            break;
-          case 'auto': {
-            // For auto, use the favicon from the URL
-            const faviconUrl = `https://www.google.com/s2/favicons?domain=${bookmark.url}&sz=64`;
+    // Handle different thumbnail source types
+    if (bookmark.thumbSourceType) {
+      switch (bookmark.thumbSourceType) {
+        case 'remote':
+          // First check if we have the image data stored locally
+          if (bookmark.thumbData) {
+            return <img src={bookmark.thumbData} alt={bookmark.title} className="w-36 h-auto object-contain" />;
+          } else if (bookmark.thumbUrl) {
+            // Fallback to remote URL if no local data is available
             return (
               <img
-                src={faviconUrl}
+                src={bookmark.thumbUrl}
                 alt={bookmark.title}
                 className="w-36 h-auto object-contain"
                 onError={e => {
                   // Fallback to default icon on error
                   (e.target as HTMLImageElement).style.display = 'none';
-                  // Show a default icon instead
+                  // Show default icon or placeholder
                 }}
               />
             );
           }
+          break;
+        case 'upload':
+          if (bookmark.thumbData) {
+            return <img src={bookmark.thumbData} alt={bookmark.title} className="w-36 h-auto object-contain" />;
+          }
+          break;
+        case 'default':
+          if (typeof bookmark.thumbIndex === 'number' && defaultIcons[bookmark.thumbIndex]) {
+            return <div className={`${iconClassName}`}>{defaultIcons[bookmark.thumbIndex].icon}</div>;
+          }
+          break;
+        case 'auto': {
+          // For auto, use the favicon from the URL
+          const faviconUrl = `https://www.google.com/s2/favicons?domain=${bookmark.url}&sz=64`;
+          return (
+            <img
+              src={faviconUrl}
+              alt={bookmark.title}
+              className="w-36 h-auto object-contain"
+              onError={e => {
+                // Fallback to default icon on error
+                (e.target as HTMLImageElement).style.display = 'none';
+                // Show a default icon instead
+              }}
+            />
+          );
         }
       }
     }
@@ -152,7 +166,7 @@ export const Bookmark: React.FC<BookmarkProps> = ({
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 hover:bg-white/20 dark:hover:bg-gray-700/50"
-                  onClick={e => onEdit(e, bookmark)}
+                  onClick={handleEdit}
                   aria-label={`Edit ${bookmark.title} bookmark`}>
                   <Edit2 className="h-4 w-4" />
                 </Button>
@@ -167,7 +181,7 @@ export const Bookmark: React.FC<BookmarkProps> = ({
               </div>
               <div className="flex items-center justify-center gap-1 text-sm bg-white/30 dark:bg-gray-700/30 backdrop-blur-sm rounded-md p-1">
                 <MousePointerClick className="h-4 w-4" />
-                <span>{bookmarkStats[bookmark.url] || 0} clicks</span>
+                <span>{bookmark.clickCount || 0} clicks</span>
               </div>
             </div>
           )}
@@ -176,17 +190,13 @@ export const Bookmark: React.FC<BookmarkProps> = ({
     </Card>
   );
 
-  // if (bookmark.isDefault) {
-  //   return <AddDial>{bookmarkContent}</AddDial>;
-  // }
-
   return (
     <button
       className="w-full"
-      onClick={() => onBookmarkClick(bookmark.url)}
+      onClick={handleBookmarkClick}
       onKeyDown={e => {
         if (e.key === 'Enter') {
-          onBookmarkClick(bookmark.url);
+          handleBookmarkClick();
         }
       }}>
       {bookmarkContent}
