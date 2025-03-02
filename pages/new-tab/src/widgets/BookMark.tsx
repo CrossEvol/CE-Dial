@@ -5,7 +5,6 @@ import { defaultIcons } from '@src/lib/defaultIcons';
 import { useBearStore } from '@src/store';
 import { Edit2, MousePointerClick, Trash2 } from 'lucide-react';
 import type React from 'react';
-import { AddDial } from './AddDial';
 
 export type BookMarkItem = {
   id?: number;
@@ -177,9 +176,9 @@ export const Bookmark: React.FC<BookmarkProps> = ({
     </Card>
   );
 
-  if (bookmark.isDefault) {
-    return <AddDial>{bookmarkContent}</AddDial>;
-  }
+  // if (bookmark.isDefault) {
+  //   return <AddDial>{bookmarkContent}</AddDial>;
+  // }
 
   return (
     <button

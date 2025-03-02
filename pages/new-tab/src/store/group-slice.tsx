@@ -77,8 +77,15 @@ export const createGroupSlice: StateCreator<GroupSlice> = (set, get) => ({
   },
 
   deleteGroup: async id => {
-    await db.deleteGroup(id);
+    // Perform the deletion in a transaction
+    await db.transaction('rw', db.dials, db.groups, async () => {
+      // First delete all dials in this group
+      await db.dials.where({ groupId: id }).delete();
+      // Then delete the group itself
+      await db.groups.delete(id);
+    });
 
+    // Update the state
     set(state => ({
       groups: state.groups.filter(group => group.id !== id),
     }));

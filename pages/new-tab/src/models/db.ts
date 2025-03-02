@@ -14,17 +14,11 @@ export class AppDB extends Dexie {
       groups: '++id, name, pos, is_selected',
     });
   }
-
-  deleteGroup(groupId: number) {
-    return this.transaction('rw', this.dials, this.groups, () => {
-      this.dials.where({ groupId }).delete();
-      this.groups.delete(groupId);
-    });
-  }
 }
 
 export const db = new AppDB();
 
+// Only call populate when the database is created for the first time
 db.on('populate', populate);
 
 export function resetDatabase() {
