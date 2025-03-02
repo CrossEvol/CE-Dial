@@ -1,6 +1,6 @@
 import { exampleThemeStorage } from '@extension/storage';
-import { Download, FolderUp, Settings, SunMoon } from 'lucide-react';
-import { useRef } from 'react';
+import { Download, FolderUp, RefreshCw, Settings, SunMoon } from 'lucide-react';
+import { useRef, useState } from 'react';
 import { useBearStore } from '../store';
 
 import { Button } from '@/components/ui/button';
@@ -16,8 +16,25 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 export function SettingsMenu() {
-  const { exportData, importData } = useBearStore();
+  const { exportData, importData, syncData, isSyncConfigured } = useBearStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleSync = async () => {
+    if (!isSyncConfigured()) {
+      alert('GitHub sync is not configured. Please set the required environment variables.');
+      return;
+    }
+
+    setIsSyncing(true);
+    try {
+      await syncData();
+    } catch (error) {
+      console.error('Sync error:', error);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const handleExport = () => {
     exportData();
@@ -59,6 +76,11 @@ export function SettingsMenu() {
           <DropdownMenuLabel>My Settings</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
+            <DropdownMenuItem onClick={handleSync} disabled={isSyncing || !isSyncConfigured()}>
+              <RefreshCw className={isSyncing ? 'animate-spin' : ''} />
+              <span>{isSyncing ? 'Syncing...' : 'Sync to GitHub'}</span>
+              <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={handleExport}>
               <Download />
               <span>Export</span>
