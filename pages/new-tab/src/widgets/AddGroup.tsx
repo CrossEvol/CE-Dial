@@ -4,6 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useBearStore } from '@/store';
+import { useStorage } from '@extension/shared';
+import { exampleThemeStorage } from '@extension/storage';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 
@@ -17,6 +19,8 @@ const AddGroup: React.FC<AddGroupProps> = ({
   isAddGroupDialogOpen: externalOpen,
   setIsAddGroupDialogOpen: setExternalOpen,
 }) => {
+  const theme = useStorage(exampleThemeStorage);
+  const isLight = theme === 'light';
   // Use internal state if external state is not provided
   const [internalOpen, setInternalOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
@@ -48,7 +52,11 @@ const AddGroup: React.FC<AddGroupProps> = ({
     <>
       <Dialog open={isAddGroupDialogOpen} onOpenChange={setIsAddGroupDialogOpen}>
         <DialogTrigger asChild>
-          <button onClick={() => setIsAddGroupDialogOpen(true)} className={`px-4 py-2 rounded-md text-sm font-medium`}>
+          <button
+            onClick={() => setIsAddGroupDialogOpen(true)}
+            className={`px-4 rounded-md text-sm font-medium border-dashed border-2 ${
+              isLight ? ' hover:bg-gray-300' : ' hover:bg-gray-600'
+            }`}>
             <div className="flex items-center">
               <Plus className="inline-block" />
             </div>

@@ -29,12 +29,13 @@ interface AddDialProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   children?: React.ReactNode;
-  selectedGroupId?: number;
 }
 
-export function AddDial({ children, selectedGroupId, open, onOpenChange }: AddDialProps) {
+export function AddDial({ open, onOpenChange }: AddDialProps) {
   const [previewFile, setPreviewFile] = useState<(File & { preview: string }) | null>(null);
   const [selectedIcon, setSelectedIcon] = useState<IconData | null>(null);
+  const selectedGroup = useBearStore(state => state.selectedGroup);
+  const selectedGroupId = selectedGroup?.id;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -49,11 +50,16 @@ export function AddDial({ children, selectedGroupId, open, onOpenChange }: AddDi
 
   const addDial = useBearStore(state => state.addDial);
   const groups = useBearStore(state => state.groups);
-  const fetchGroups = useBearStore(state => state.fetchGroups);
+  const initGroups = useBearStore(state => state.initGroups);
 
   useEffect(() => {
-    fetchGroups();
-  }, [fetchGroups]);
+    initGroups();
+
+    // Set the default group to the selected group when the form initializes
+    if (selectedGroupId) {
+      form.setValue('group', String(selectedGroupId));
+    }
+  }, [initGroups, form, selectedGroupId]);
 
   const onSubmit = async (data: FormValues) => {
     console.log('Form submitted:', data);
@@ -219,7 +225,7 @@ export function AddDial({ children, selectedGroupId, open, onOpenChange }: AddDi
                 <Button variant="secondary">Select Default Preview</Button>
               </PopoverTrigger>
               <PopoverContent className="w-80">
-                <div className="grid grid-cols-4 gap-2 p-2">
+                <div className="grid grid-cols-5 gap-2 p-2">
                   {defaultIcons.map((iconData, index) => (
                     <button
                       key={index}
@@ -301,13 +307,15 @@ export function AddDial({ children, selectedGroupId, open, onOpenChange }: AddDi
                         <SelectValue placeholder="Select a group" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent className="top-4">
                       {groups.length > 0 ? (
-                        groups.map(group => (
-                          <SelectItem key={group.id} value={String(group.id)}>
-                            {group.name}
-                          </SelectItem>
-                        ))
+                        [...groups]
+                          .sort((a, b) => a.name.localeCompare(b.name))
+                          .map(group => (
+                            <SelectItem key={group.id} value={String(group.id)}>
+                              {group.name}
+                            </SelectItem>
+                          ))
                       ) : (
                         <SelectItem value="1">Default</SelectItem>
                       )}

@@ -35,7 +35,7 @@ const EditDial: React.FC<EditDialProps> = ({ dial, setIsEditDialogOpen }) => {
   const [previewFile, setPreviewFile] = useState<(File & { preview: string }) | null>(null);
   const [selectedIcon, setSelectedIcon] = useState<IconData | null>(null);
 
-  const { updateDial, groups, fetchGroups } = useBearStore();
+  const { updateDial, groups, initGroups } = useBearStore();
 
   // Determine initial preview type based on dial data
   const getInitialPreviewType = (): 'auto' | 'remote' | 'upload' | 'default' => {
@@ -58,7 +58,7 @@ const EditDial: React.FC<EditDialProps> = ({ dial, setIsEditDialogOpen }) => {
   });
 
   useEffect(() => {
-    fetchGroups();
+    initGroups();
 
     // Set selected icon if dial has a thumbIndex
     if (dial.thumbIndex !== undefined && dial.thumbIndex >= 0 && defaultIcons[dial.thumbIndex]) {
@@ -69,7 +69,7 @@ const EditDial: React.FC<EditDialProps> = ({ dial, setIsEditDialogOpen }) => {
     if (dial.thumbData) {
       form.setValue('previewUrl', dial.thumbData);
     }
-  }, [fetchGroups, dial, form]);
+  }, [initGroups, dial, form]);
 
   const onSubmit = async (data: FormValues) => {
     // Remove URL prefixes (http://, https://, etc.)

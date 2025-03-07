@@ -70,8 +70,8 @@ const NewTab = () => {
   const {
     groups,
     dials,
-    fetchGroups,
-    fetchDials,
+    initGroups,
+    initDials,
     setSelectedGroup,
     deleteGroup,
     reorderDials,
@@ -97,9 +97,9 @@ const NewTab = () => {
 
   // Fetch groups and dials on component mount
   useEffect(() => {
-    fetchGroups();
-    fetchDials();
-  }, [fetchGroups, fetchDials]);
+    initGroups();
+    initDials();
+  }, [initGroups, initDials]);
 
   // Set the first group as selected by default when groups are loaded
   useEffect(() => {
@@ -143,9 +143,6 @@ const NewTab = () => {
       }
     }
   };
-
-  // We still need selectedGroupId for other parts of the component
-  const selectedGroupId = groups.find(group => group.is_selected)?.id;
 
   const handleEditGroup = (group: GroupItem) => {
     setSelectedGroupForEdit(group);
@@ -217,15 +214,12 @@ const NewTab = () => {
         onDragEnd={handleDragEnd}>
         {/* Groups navigation */}
         <div className="max-w-6xl mx-auto mb-6">
-          <div className="flex space-x-1 overflow-x-auto pb-2">
+          <div className="flex flex-wrap gap-1 pb-2">
             {groups.map(group => (
               <Droppable key={groupKey(group.id!)} id={groupKey(group.id!)}>
                 <GroupWidget
                   key={group.id}
                   group={group}
-                  isLight={isLight}
-                  filteredDials={filteredDials}
-                  setSelectedGroup={setSelectedGroup}
                   handleEditGroup={handleEditGroup}
                   handleDeleteGroup={handleDeleteGroup}
                   setIsManageGroupDialogOpen={setIsManageGroupDialogOpen}
@@ -296,10 +290,7 @@ const NewTab = () => {
                     <Plus size={24} className={isLight ? 'text-gray-600' : 'text-gray-300'} />
                     <span className={`mt-2 text-sm ${isLight ? 'text-gray-600' : 'text-gray-300'}`}>Add Bookmark</span>
                   </div>
-                  <AddDial
-                    selectedGroupId={selectedGroupId}
-                    open={isAddDialDialogOpen}
-                    onOpenChange={setIsAddDialDialogOpen}></AddDial>
+                  <AddDial open={isAddDialDialogOpen} onOpenChange={setIsAddDialDialogOpen}></AddDial>
                 </>
               ) : (
                 <>
@@ -312,10 +303,7 @@ const NewTab = () => {
                     <Plus size={24} className={isLight ? 'text-gray-600' : 'text-gray-300'} />
                     <span className={`mt-2 text-sm ${isLight ? 'text-gray-600' : 'text-gray-300'}`}>Add Bookmark</span>
                   </div>
-                  <AddDial
-                    selectedGroupId={selectedGroupId}
-                    open={isAddDialDialogOpen}
-                    onOpenChange={setIsAddDialDialogOpen}></AddDial>
+                  <AddDial open={isAddDialDialogOpen} onOpenChange={setIsAddDialDialogOpen}></AddDial>
                 </>
               )}
             </div>

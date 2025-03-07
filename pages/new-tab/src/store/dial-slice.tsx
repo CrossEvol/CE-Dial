@@ -11,7 +11,7 @@ export interface DialSlice {
   dials: DialItem[];
 
   // Actions
-  fetchDials: () => Promise<void>;
+  initDials: () => Promise<void>;
   addDial: (dial: Omit<DialItem, 'id' | 'clickCount' | 'createdAt' | 'updatedAt'>) => Promise<number>;
   updateDial: (id: number, updates: Partial<DialItem>) => Promise<void>;
   deleteDial: (id: number) => Promise<void>;
@@ -26,7 +26,7 @@ export interface DialSlice {
 export const createDialSlice: StateCreator<DialSlice> = (set, get) => ({
   dials: [],
 
-  fetchDials: async () => {
+  initDials: async () => {
     const dials = await db.dials.toArray();
     set({ dials });
   },
@@ -173,6 +173,6 @@ export const createDialSlice: StateCreator<DialSlice> = (set, get) => ({
     }
 
     // Refresh the dials in the store
-    await get().fetchDials();
+    await get().initDials();
   },
 });

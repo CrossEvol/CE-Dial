@@ -4,8 +4,9 @@ import { db } from '../models';
 
 export interface GroupSlice {
   groups: GroupItem[];
+  selectedGroup?: GroupItem;
   // Actions
-  fetchGroups: () => Promise<void>;
+  initGroups: () => Promise<void>;
   addGroup: (name: string, position: 'top' | 'bottom') => Promise<number>;
   updateGroup: (id: number, updates: Partial<GroupItem>) => Promise<void>;
   deleteGroup: (id: number) => Promise<void>;
@@ -19,8 +20,9 @@ export interface GroupSlice {
 
 export const createGroupSlice: StateCreator<GroupSlice> = (set, get) => ({
   groups: [],
+  selectedGroup: undefined,
 
-  fetchGroups: async () => {
+  initGroups: async () => {
     const groups = await db.groups.orderBy('pos').toArray();
     set({ groups });
   },
@@ -56,7 +58,7 @@ export const createGroupSlice: StateCreator<GroupSlice> = (set, get) => ({
     const id = await db.groups.add(newGroup);
 
     // Refetch groups to ensure correct order
-    await set(state => ({
+    set(state => ({
       groups: state.groups.filter(g => g.id !== undefined),
     }));
     const updatedGroups = await db.groups.orderBy('pos').toArray();
@@ -99,12 +101,16 @@ export const createGroupSlice: StateCreator<GroupSlice> = (set, get) => ({
     });
 
     // Update the state
-    set(state => ({
-      groups: state.groups.map(group => ({
+    set(state => {
+      const newGroups = state.groups.map(group => ({
         ...group,
         is_selected: group.id === id,
-      })),
-    }));
+      }));
+      return {
+        groups: newGroups,
+        selectedGroup: newGroups.find(group => group.is_selected),
+      };
+    });
   },
 
   reorderGroups: async reorderedGroups => {
@@ -173,7 +179,7 @@ export const createGroupSlice: StateCreator<GroupSlice> = (set, get) => ({
     }
 
     // Refresh the groups in the store
-    await get().fetchGroups();
+    await get().initGroups();
 
     return nameToIdMap;
   },

@@ -6,33 +6,28 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
-import type { DialItem, GroupItem } from '../models';
+import { useStorage } from '@extension/shared';
+import { exampleThemeStorage } from '@extension/storage';
+import { useBearStore } from '@src/store';
+import type { GroupItem } from '../models';
 
 interface GroupWidgetProps {
   group: GroupItem;
-  isLight: boolean;
-  filteredDials: DialItem[];
-  setSelectedGroup: (groupId: number) => void;
   handleEditGroup: (group: GroupItem) => void;
   handleDeleteGroup: (groupId: number) => void;
   setIsManageGroupDialogOpen: (isOpen: boolean) => void;
 }
 
-const GroupWidget = ({
-  group,
-  isLight,
-  filteredDials,
-  setSelectedGroup,
-  handleEditGroup,
-  handleDeleteGroup,
-  setIsManageGroupDialogOpen,
-}: GroupWidgetProps) => {
+const GroupWidget = ({ group, handleEditGroup, handleDeleteGroup, setIsManageGroupDialogOpen }: GroupWidgetProps) => {
+  const theme = useStorage(exampleThemeStorage);
+  const isLight = theme === 'light';
+  const setSelectedGroup = useBearStore(state => state.setSelectedGroup);
   return (
     <ContextMenu>
       <ContextMenuTrigger>
         <button
           onClick={() => setSelectedGroup(group.id!)}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors min-w-20 ${
             group.is_selected
               ? isLight
                 ? 'bg-blue-600 text-white'
@@ -41,7 +36,7 @@ const GroupWidget = ({
                 ? 'bg-gray-200 text-gray-800 hover:bg-gray-300'
                 : 'bg-gray-700 text-gray-200 hover:bg-gray-600'
           }`}>
-          {group.name} ({filteredDials.filter(dial => dial.groupId === group.id).length})
+          {group.name}
         </button>
       </ContextMenuTrigger>
       <ContextMenuContent>
