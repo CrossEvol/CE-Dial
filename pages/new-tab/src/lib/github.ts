@@ -1,9 +1,10 @@
+import type { GitHubConfig } from '@extension/shared';
+import { githubConfigStorage } from '@extension/storage';
 import { Octokit } from 'octokit';
-import type { GitHubConfig } from './github.config';
-import { githubConfig } from './github.config';
 
-export const isGitHubConfigValid = (): boolean => {
-  return !!(githubConfig.token && githubConfig.owner && githubConfig.repo);
+export const isGitHubConfigValid = async (): Promise<boolean> => {
+  const config = await githubConfigStorage.get();
+  return !!(config.token && config.owner && config.repo);
 };
 
 export class GitHubSyncService {
@@ -85,9 +86,10 @@ export class GitHubSyncService {
   }
 }
 
-export const createGitHubSyncService = (): GitHubSyncService | null => {
-  if (!isGitHubConfigValid()) {
+export const createGitHubSyncService = async (): Promise<GitHubSyncService | null> => {
+  if (!(await isGitHubConfigValid())) {
     return null;
   }
-  return new GitHubSyncService(githubConfig);
+  const config = await githubConfigStorage.get();
+  return new GitHubSyncService(config);
 };

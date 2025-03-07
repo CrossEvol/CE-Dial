@@ -40,6 +40,7 @@
     "clsx": "^2.1.1",
     "dexie": "^4.0.11",
     "dexie-react-hooks": "^1.1.7",
+    "js-yaml": "^4.1.0",
     "lucide-react": "^0.475.0",
     "octokit": "^4.1.2",
     "react-dropzone": "^14.3.8",
@@ -52,6 +53,7 @@
     "@extension/tailwindcss-config": "workspace:*",
     "@extension/tsconfig": "workspace:*",
     "@extension/vite-config": "workspace:*",
+    "@types/js-yaml": "^4.0.9",
     "sass": "1.79.4",
     "tailwindcss-animate": "^1.0.7"
   },

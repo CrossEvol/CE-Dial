@@ -15,7 +15,7 @@ export interface SharedSlice {
   exportData: () => Promise<void>;
   importData: (data: ExportDataType) => Promise<void>;
   syncData: () => Promise<void>;
-  isSyncConfigured: () => boolean;
+  isSyncConfigured: () => Promise<boolean>;
 }
 
 export const createSharedSlice: StateCreator<BearState, [], [], SharedSlice> = (set, get) => ({
@@ -79,7 +79,7 @@ export const createSharedSlice: StateCreator<BearState, [], [], SharedSlice> = (
 
   syncData: async () => {
     try {
-      const githubService = createGitHubSyncService();
+      const githubService = await createGitHubSyncService();
       console.log('create github service successfully.');
       console.log(githubService);
       if (!githubService) {
@@ -121,8 +121,8 @@ export const createSharedSlice: StateCreator<BearState, [], [], SharedSlice> = (
     }
   },
 
-  isSyncConfigured: () => {
-    return isGitHubConfigValid();
+  isSyncConfigured: async () => {
+    return await isGitHubConfigValid();
   },
 });
 
