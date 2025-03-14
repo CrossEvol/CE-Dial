@@ -3,7 +3,13 @@ name: Build And Upload Extension Zip Via Artifact
 on:
   push:
     branches: [ main, dev, master ]
+    tags:
+      - 'v*' # This will trigger the workflow when you push a tag that starts with 'v'
   pull_request:
+
+# Add this permissions block
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -22,6 +28,18 @@ jobs:
 
       - run: pnpm build
 
+      - name: Create zip file
+        run: pnpm zip
+
       - uses: actions/upload-artifact@v4
         with:
           path: dist/*
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            dist-zip/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}

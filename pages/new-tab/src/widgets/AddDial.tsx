@@ -13,6 +13,7 @@ import { defaultIcons } from '@src/lib/defaultIcons';
 import { useEffect, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useForm } from 'react-hook-form';
+import { toast } from 'react-toastify';
 import * as z from 'zod';
 
 export const formSchema = z.object({
@@ -113,7 +114,7 @@ export function AddDial({ open, onOpenChange }: AddDialProps) {
     } catch (error) {
       console.error('Error adding dial:', error);
       // Show error message
-      window.confirm('Error adding dial.');
+      toast.error(`Error adding dial.`);
     }
   };
 

@@ -49,7 +49,7 @@ const EditDial: React.FC<EditDialProps> = ({ dial, setIsEditDialogOpen }) => {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      url: dial.url || '',
+      url: dial.url ? `http://${dial.url}` : '',
       title: dial.title || '',
       group: dial.groupId?.toString() || '1',
       previewType: getInitialPreviewType(),
