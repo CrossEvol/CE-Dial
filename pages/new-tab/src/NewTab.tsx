@@ -3,8 +3,10 @@ import { useStorage, withErrorBoundary, withSuspense } from '@extension/shared';
 import { exampleThemeStorage } from '@extension/storage';
 import '@src/NewTab.css';
 import '@src/NewTab.scss';
-import { Facebook, Github, Plus, Twitter } from 'lucide-react';
+import { CircleArrowOutUpRight, Facebook, Github, Goal, ImagePlay, Plus, Twitter } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Bounce, toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { useBearStore } from './store';
 import { Bookmark } from './widgets/BookMark';
 
@@ -20,6 +22,13 @@ import EditDial from './widgets/EditDial';
 import EditGroup from './widgets/EditGroup';
 
 // Import dnd-kit components
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuShortcut,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   closestCenter,
   DndContext,
@@ -124,7 +133,7 @@ const NewTab = () => {
   const handleDeleteGroup = async (groupId: number) => {
     // Check if this is the last group
     if (groups.length <= 1) {
-      alert("You can't delete the last group. At least one group must exist.");
+      toast.error("You can't delete the last group. At least one group must exist.");
       return;
     }
 
@@ -141,6 +150,8 @@ const NewTab = () => {
           setSelectedGroup(nextGroup.id!);
         }
       }
+
+      toast.success('Group deleted successfully');
     }
   };
 
@@ -207,6 +218,20 @@ const NewTab = () => {
 
   return (
     <div className={`min-h-screen p-8 ${isLight ? 'bg-slate-50' : 'bg-gray-800'}`}>
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme={isLight ? 'light' : 'dark'}
+        transition={Bounce}
+        style={{ zIndex: 9999 }}
+      />
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -235,16 +260,38 @@ const NewTab = () => {
         {/* Search bar */}
         <div className="max-w-3xl mx-auto mb-8">
           <div className="relative">
+            {/* Add dropdown menu here */}
+            <div className="absolute -left-[52px] top-1/2 transform -translate-y-1/2 z-10">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    <CircleArrowOutUpRight />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onClick={() => window.open('https://www.google.com', '_blank')}>
+                    <Goal />
+                    <span>Google Search</span>
+                    <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => window.open('https://images.google.com', '_blank')}>
+                    <ImagePlay />
+                    <span>Google Images</span>
+                    <DropdownMenuShortcut>⌘I</DropdownMenuShortcut>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
             <input
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Enter your search..."
-              className="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 rounded-lg text-base border focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <Button
-              variant="ghost"
+              variant="link"
               className="absolute right-2 top-1/2 transform -translate-y-1/2"
               onClick={handleSearch}>
               <SearchIcon className="h-5 w-5" />

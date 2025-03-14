@@ -3,6 +3,7 @@ import type { GroupSlice } from './group-slice';
 
 import { createGitHubSyncService, isGitHubConfigValid } from '@/lib/github';
 import type { DialItem, GroupItem } from '@src/models';
+import { toast } from 'react-toastify';
 import { type StateCreator } from 'zustand';
 
 export interface ExportDataType {
@@ -70,10 +71,10 @@ export const createSharedSlice: StateCreator<BearState, [], [], SharedSlice> = (
       // Then import dials using the group mapping
       await store.importDials(data.dials, groupNameToIdMap);
 
-      alert('Data imported successfully!');
+      toast.success('Data imported successfully!');
     } catch (error) {
       console.error('Import failed:', error);
-      alert(`Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(`Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   },
 
@@ -114,10 +115,10 @@ export const createSharedSlice: StateCreator<BearState, [], [], SharedSlice> = (
         console.warn('Could not retrieve remote data, but upload succeeded:', downloadError);
       }
 
-      alert('Data synced successfully with GitHub!');
+      toast.success('Data synced successfully with GitHub!');
     } catch (error) {
       console.error('Sync failed:', error);
-      alert(`Sync failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(`Sync failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   },
 

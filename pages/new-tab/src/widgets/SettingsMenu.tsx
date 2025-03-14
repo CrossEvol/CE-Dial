@@ -3,6 +3,7 @@ import { exampleThemeStorage, githubConfigStorage } from '@extension/storage';
 import yaml from 'js-yaml';
 import { Download, FolderUp, KeyRound, RefreshCw, Settings, SunMoon } from 'lucide-react';
 import { useRef, useState } from 'react';
+import { toast } from 'react-toastify';
 import { useBearStore } from '../store';
 
 import { Button } from '@/components/ui/button';
@@ -25,7 +26,7 @@ export function SettingsMenu() {
 
   const handleSync = async () => {
     if (!isSyncConfigured()) {
-      alert('GitHub sync is not configured. Please set the required environment variables.');
+      toast.error('GitHub sync is not configured. Please set the required environment variables.');
       return;
     }
 
@@ -34,6 +35,7 @@ export function SettingsMenu() {
       await syncData();
     } catch (error) {
       console.error('Sync error:', error);
+      toast.error(`Sync error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsSyncing(false);
     }
@@ -57,7 +59,7 @@ export function SettingsMenu() {
           importData(jsonData);
         } catch (error) {
           console.error('Failed to parse import file:', error);
-          alert('Invalid import file format');
+          toast.error('Invalid import file format');
         }
       };
       reader.readAsText(file);
@@ -89,7 +91,7 @@ export function SettingsMenu() {
 
           // Validate the config has the required fields
           if (!jsonData.token || !jsonData.owner || !jsonData.repo) {
-            alert('Invalid GitHub configuration. Please include token, owner, and repo fields.');
+            toast.error('Invalid GitHub configuration. Please include token, owner, and repo fields.');
             return;
           }
 
@@ -100,10 +102,10 @@ export function SettingsMenu() {
 
           // Save to storage
           githubConfigStorage.set(jsonData);
-          alert('GitHub configuration successfully loaded');
+          toast.success('GitHub configuration successfully loaded');
         } catch (error) {
           console.error('Failed to parse GitHub config file:', error);
-          alert('Invalid GitHub configuration file format');
+          toast.error('Invalid GitHub configuration file format');
         }
       };
       reader.readAsText(file);
