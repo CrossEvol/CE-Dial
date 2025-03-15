@@ -45,6 +45,9 @@ import GroupWidget from './widgets/GroupWidget';
 import { SettingsMenu } from './widgets/SettingsMenu';
 import { SortableItem } from './widgets/sortable-item';
 
+// Import the Skeleton component
+import { Skeleton } from '@/components/ui/skeleton';
+
 const GROUP = 'group::';
 
 function groupKey(id: number | string) {
@@ -413,4 +416,50 @@ const SearchIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-export default withErrorBoundary(withSuspense(NewTab, <div>{'Loading'}</div>), <div> Error Occur </div>);
+// Create a LoadingSkeleton component
+const LoadingSkeleton = () => {
+  const isLight = true; // Default to light theme for loading state
+
+  return (
+    <div className={`min-h-screen p-8 ${isLight ? 'bg-slate-50' : 'bg-gray-800'}`}>
+      {/* Groups navigation skeleton */}
+      <div className="max-w-6xl mx-auto mb-6">
+        <div className="flex flex-wrap gap-1 pb-2">
+          {/* Group tabs skeleton */}
+          {[1, 2, 3].map(i => (
+            <Skeleton key={i} className="h-10 w-24 rounded-md" />
+          ))}
+          {/* Add group button skeleton */}
+          <Skeleton className="h-10 w-10 rounded-md" />
+        </div>
+      </div>
+
+      {/* Search bar skeleton */}
+      <div className="max-w-3xl mx-auto mb-8">
+        <div className="relative">
+          <Skeleton className="h-10 w-full rounded-lg" />
+        </div>
+      </div>
+
+      {/* Bookmarks grid skeleton */}
+      <div className="max-w-6xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {/* Generate 11 bookmark skeletons + 1 add button */}
+          {Array(11)
+            .fill(0)
+            .map((_, i) => (
+              <Skeleton key={i} className="h-32 w-full rounded-lg" />
+            ))}
+          <Skeleton className="h-32 w-full rounded-lg border-2 border-dashed" />
+        </div>
+      </div>
+
+      {/* Settings button skeleton */}
+      <div className="w-52 fixed bottom-4 right-8">
+        <Skeleton className="h-10 w-full rounded-md" />
+      </div>
+    </div>
+  );
+};
+
+export default withErrorBoundary(withSuspense(NewTab, <LoadingSkeleton />), <div> Error Occur </div>);
