@@ -6,6 +6,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useBearStore } from '@/store';
 import { useStorage } from '@extension/shared';
 import { exampleThemeStorage } from '@extension/storage';
+import type { EmojiClickData } from 'emoji-picker-react';
+import EmojiPicker from 'emoji-picker-react';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 
@@ -77,6 +79,22 @@ const AddGroup: React.FC<AddGroupProps> = ({
                 onChange={e => setNewGroupName(e.target.value)}
                 className="col-span-3"
               />
+            </div>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right">Emoji</Label>
+                <div className="col-span-3">
+                  <EmojiPicker
+                    onEmojiClick={(emojiObject: EmojiClickData) => {
+                      setNewGroupName(prev => prev + emojiObject.emoji);
+                    }}
+                    reactionsDefaultOpen={true}
+                    allowExpandReactions={true}
+                    width="100%"
+                    height={500}
+                  />
+                </div>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right">Add To</Label>
