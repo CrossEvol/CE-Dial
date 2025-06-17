@@ -1,6 +1,6 @@
 export type ThumbSourceType = 'remote' | 'upload' | 'default' | 'auto';
 
-export interface DialItem {
+export type DialItem = {
   id?: number;
   url: string;
   title: string;
@@ -13,4 +13,6 @@ export interface DialItem {
   clickCount: number;
   createdAt: Date;
   updatedAt: Date;
-}
+};
+
+export type CreateDialItem = Omit<DialItem, 'id' | 'clickCount' | 'createdAt' | 'updatedAt'>;

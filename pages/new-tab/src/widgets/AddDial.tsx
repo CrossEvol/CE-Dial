@@ -1,10 +1,10 @@
+import { MultiSelect } from '@/components/multi-select';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { ThumbSourceType } from '@/models';
 import { useBearStore } from '@/store';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,7 +19,7 @@ import * as z from 'zod';
 export const formSchema = z.object({
   url: z.string().url({ message: 'Please enter a valid URL' }),
   title: z.string().min(1, { message: 'Title is required' }),
-  group: z.string(),
+  groups: z.string().array(),
   previewType: z.enum(['auto', 'remote', 'upload', 'default']),
   previewUrl: z.string().optional(),
 });
@@ -43,7 +43,7 @@ export function AddDial({ open, onOpenChange }: AddDialProps) {
     defaultValues: {
       url: '',
       title: '',
-      group: selectedGroupId ? String(selectedGroupId) : '1',
+      groups: selectedGroup ? [selectedGroup.id!.toString()] : ['1'],
       previewType: 'auto',
       previewUrl: '',
     },
@@ -58,7 +58,7 @@ export function AddDial({ open, onOpenChange }: AddDialProps) {
 
     // Set the default group to the selected group when the form initializes
     if (selectedGroupId) {
-      form.setValue('group', String(selectedGroupId));
+      form.setValue('groups', [String(selectedGroupId)]);
     }
   }, [initGroups, form, selectedGroupId]);
 
@@ -72,7 +72,7 @@ export function AddDial({ open, onOpenChange }: AddDialProps) {
     const dialData = {
       url: cleanUrl,
       title: data.title,
-      groupId: parseInt(data.group),
+      // groupId: parseInt(data.group),
       thumbSourceType: data.previewType as ThumbSourceType,
       thumbUrl: '',
       thumbData: '',
@@ -105,9 +105,13 @@ export function AddDial({ open, onOpenChange }: AddDialProps) {
     }
 
     try {
-      // Add the dial to the database
-      const id = await addDial(dialData);
-      console.log('Dial added with ID:', id);
+      data.groups
+        .map(groupId => ({ ...dialData, groupId: parseInt(groupId) }))
+        .forEach(async dialItem => {
+          // Add the dial to the database
+          const id = await addDial(dialItem);
+          console.log('Dial added with ID:', id);
+        });
 
       // Close the dialog or show success message
       onOpenChange(false);
@@ -298,30 +302,25 @@ export function AddDial({ open, onOpenChange }: AddDialProps) {
 
             <FormField
               control={form.control}
-              name="group"
+              name="groups"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Group</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a group" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent className="top-4">
-                      {groups.length > 0 ? (
-                        [...groups]
-                          .sort((a, b) => a.name.localeCompare(b.name))
-                          .map(group => (
-                            <SelectItem key={group.id} value={String(group.id)}>
-                              {group.name}
-                            </SelectItem>
-                          ))
-                      ) : (
-                        <SelectItem value="1">Default</SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
+                  <FormLabel>Groups</FormLabel>
+                  <div className="max-w-xl">
+                    <MultiSelect
+                      options={groups.map(group => ({
+                        value: group.id!.toString(),
+                        label: group.name,
+                        icon: undefined,
+                      }))}
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      placeholder="Select frameworks"
+                      variant="inverted"
+                      animation={2}
+                      maxCount={3}
+                    />
+                  </div>
                 </FormItem>
               )}
             />

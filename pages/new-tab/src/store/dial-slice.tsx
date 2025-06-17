@@ -1,3 +1,4 @@
+import type { CreateDialItem } from '@src/models/DialItem';
 import { type StateCreator } from 'zustand';
 import type { DialItem } from '../models';
 import { db } from '../models';
@@ -12,7 +13,7 @@ export interface DialSlice {
 
   // Actions
   initDials: () => Promise<void>;
-  addDial: (dial: Omit<DialItem, 'id' | 'clickCount' | 'createdAt' | 'updatedAt'>) => Promise<number>;
+  addDial: (dial: CreateDialItem) => Promise<number>;
   updateDial: (id: number, updates: Partial<DialItem>) => Promise<void>;
   deleteDial: (id: number) => Promise<void>;
   incrementClickCount: (id: number) => Promise<void>;
