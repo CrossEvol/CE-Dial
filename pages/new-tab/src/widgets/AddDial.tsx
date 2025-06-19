@@ -115,6 +115,7 @@ export function AddDial({ open, onOpenChange }: AddDialProps) {
 
       // Close the dialog or show success message
       onOpenChange(false);
+      form.reset();
     } catch (error) {
       console.error('Error adding dial:', error);
       // Show error message
@@ -379,6 +380,9 @@ export function AddDial({ open, onOpenChange }: AddDialProps) {
             {(previewType === 'upload' || previewType === 'default') && <>{renderPreviewSection()}</>}
 
             <DialogFooter>
+              <Button variant="outline" onClick={() => form.reset()}>
+                Reset
+              </Button>
               <Button type="submit">Add Bookmark</Button>
             </DialogFooter>
           </form>

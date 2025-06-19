@@ -28,10 +28,10 @@ type FormValues = z.infer<typeof formSchema>;
 
 interface EditDialProps {
   dial: DialItem;
-  setIsEditDialogOpen: (open: boolean) => void;
+  onClose: (open: boolean) => void;
 }
 
-const EditDial: React.FC<EditDialProps> = ({ dial, setIsEditDialogOpen }) => {
+const EditDial: React.FC<EditDialProps> = ({ dial, onClose }) => {
   const [previewFile, setPreviewFile] = useState<(File & { preview: string }) | null>(null);
   const [selectedIcon, setSelectedIcon] = useState<IconData | null>(null);
 
@@ -110,7 +110,7 @@ const EditDial: React.FC<EditDialProps> = ({ dial, setIsEditDialogOpen }) => {
 
     try {
       await updateDial(dial.id!, updates);
-      setIsEditDialogOpen(false);
+      onClose(false);
     } catch (error) {
       console.error('Error updating dial:', error);
     }
@@ -372,7 +372,7 @@ const EditDial: React.FC<EditDialProps> = ({ dial, setIsEditDialogOpen }) => {
           {(previewType === 'upload' || previewType === 'default') && <>{renderPreviewSection()}</>}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+            <Button variant="outline" onClick={() => onClose(false)}>
               Cancel
             </Button>
             <Button type="submit">Update Bookmark</Button>

@@ -372,15 +372,27 @@ const NewTab = () => {
         />
       </Dialog>
 
-      <Dialog open={isEditGroupDialogOpen} onOpenChange={setIsEditGroupDialogOpen}>
-        {selectedGroupForEdit && (
-          <EditGroup group={selectedGroupForEdit} setIsEditGroupDialogOpen={setIsEditGroupDialogOpen} />
-        )}
+      <Dialog
+        open={isEditGroupDialogOpen}
+        onOpenChange={open => {
+          if (!open) {
+            setSelectedGroupForEdit(null);
+          }
+          setIsEditGroupDialogOpen(open);
+        }}>
+        {selectedGroupForEdit && <EditGroup group={selectedGroupForEdit} onClose={setIsEditGroupDialogOpen} />}
       </Dialog>
 
       {/* Add dialog for editing dials */}
-      <Dialog open={isEditDialDialogOpen} onOpenChange={setIsEditDialDialogOpen}>
-        {selectedDialForEdit && <EditDial dial={selectedDialForEdit} setIsEditDialogOpen={setIsEditDialDialogOpen} />}
+      <Dialog
+        open={isEditDialDialogOpen}
+        onOpenChange={open => {
+          if (!open) {
+            setSelectedDialForEdit(null);
+          }
+          setIsEditDialDialogOpen(open);
+        }}>
+        {selectedDialForEdit && <EditDial dial={selectedDialForEdit} onClose={setIsEditDialDialogOpen} />}
       </Dialog>
 
       {/* Theme toggle - keeping this from original code */}

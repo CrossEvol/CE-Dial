@@ -10,10 +10,10 @@ import { useState } from 'react';
 
 interface EditGroupProps {
   group: GroupItem;
-  setIsEditGroupDialogOpen: (open: boolean) => void;
+  onClose: (open: boolean) => void;
 }
 
-const EditGroup: React.FC<EditGroupProps> = ({ group, setIsEditGroupDialogOpen }) => {
+const EditGroup: React.FC<EditGroupProps> = ({ group, onClose }) => {
   const [groupName, setGroupName] = useState(group.name);
   const { updateGroup } = useBearStore();
 
@@ -21,7 +21,7 @@ const EditGroup: React.FC<EditGroupProps> = ({ group, setIsEditGroupDialogOpen }
     if (groupName.trim()) {
       await updateGroup(group.id!, { name: groupName });
       setGroupName('');
-      setIsEditGroupDialogOpen(false);
+      onClose(false);
     }
   };
 
@@ -61,7 +61,7 @@ const EditGroup: React.FC<EditGroupProps> = ({ group, setIsEditGroupDialogOpen }
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setIsEditGroupDialogOpen(false)}>
+          <Button variant="outline" onClick={() => onClose(false)}>
             Cancel
           </Button>
           <Button onClick={handleUpdateGroup}>Update Group</Button>
