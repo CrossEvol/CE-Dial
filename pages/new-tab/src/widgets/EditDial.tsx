@@ -1,18 +1,30 @@
 import { Button } from '@/components/ui/button';
 import { DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import ClipBoardUtil from '@/utils/ClipBoardUtil';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { IconData } from '@src/lib/defaultIcons';
 import { defaultIcons } from '@src/lib/defaultIcons';
 import type { DialItem, ThumbSourceType } from '@src/models';
 import { useBearStore } from '@src/store';
+import { CircleX, Copy, EllipsisVertical, StepBack } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useForm } from 'react-hook-form';
+import { toast } from 'react-toastify';
 import * as z from 'zod';
 
 // Reuse the same schema from AddDial
@@ -34,6 +46,7 @@ interface EditDialProps {
 const EditDial: React.FC<EditDialProps> = ({ dial, onClose }) => {
   const [previewFile, setPreviewFile] = useState<(File & { preview: string }) | null>(null);
   const [selectedIcon, setSelectedIcon] = useState<IconData | null>(null);
+  const [previewImageData, setPreviewImageData] = useState<string | undefined>(undefined);
 
   const { updateDial, groups, initGroups } = useBearStore();
 
@@ -358,7 +371,48 @@ const EditDial: React.FC<EditDialProps> = ({ dial, onClose }) => {
                 name="previewUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Preview URL</FormLabel>
+                    <div className="flex items-center justify-between">
+                      <FormLabel>Preview URL</FormLabel>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger>
+                          <EllipsisVertical />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuLabel>Options</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => {
+                              ClipBoardUtil.copyToClipboard({
+                                text: field.value || '',
+                                onSuccess: () => toast.info('Copied!'),
+                                onError: () => toast.error('Wrong Copied!'),
+                              });
+                            }}>
+                            <Copy />
+                            <span>Copy</span>
+                            <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setPreviewImageData(field.value);
+                              field.onChange('');
+                            }}>
+                            <CircleX />
+                            <span>Empty</span>
+                            <DropdownMenuShortcut>⌘E</DropdownMenuShortcut>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              field.onChange(previewImageData || '');
+                              setPreviewImageData(undefined);
+                            }}>
+                            <StepBack />
+                            <span>Reset</span>
+                            <DropdownMenuShortcut>⌘R</DropdownMenuShortcut>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                     <FormControl>
                       <Input placeholder="Enter preview URL" {...field} />
                     </FormControl>
