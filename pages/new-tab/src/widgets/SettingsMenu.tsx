@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 export function SettingsMenu() {
-  const { exportData, importData, syncData, isSyncConfigured } = useBearStore();
+  const { exportDialsData, exportGithubData, importDialsData, syncDialsData, isSyncConfigured } = useBearStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const githubConfigFileInputRef = useRef<HTMLInputElement>(null);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -32,7 +32,7 @@ export function SettingsMenu() {
 
     setIsSyncing(true);
     try {
-      await syncData();
+      await syncDialsData();
     } catch (error) {
       console.error('Sync error:', error);
       toast.error(`Sync error: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -41,8 +41,9 @@ export function SettingsMenu() {
     }
   };
 
-  const handleExport = () => {
-    exportData();
+  const handleExport = async () => {
+    await exportDialsData();
+    await exportGithubData();
   };
 
   const handleImport = () => {
@@ -56,7 +57,7 @@ export function SettingsMenu() {
       reader.onload = e => {
         try {
           const jsonData = JSON.parse(e.target?.result as string);
-          importData(jsonData);
+          importDialsData(jsonData);
         } catch (error) {
           console.error('Failed to parse import file:', error);
           toast.error('Invalid import file format');

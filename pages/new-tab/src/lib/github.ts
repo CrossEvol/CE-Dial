@@ -7,6 +7,11 @@ export const isGitHubConfigValid = async (): Promise<boolean> => {
   return !!(config.token && config.owner && config.repo);
 };
 
+export const getGithubConfig = async (): Promise<GitHubConfig> => {
+  const config = await githubConfigStorage.get();
+  return config;
+};
+
 export class GitHubSyncService {
   private octokit: Octokit;
 

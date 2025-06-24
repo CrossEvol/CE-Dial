@@ -1,8 +1,8 @@
 export type ValueOf<T> = T[keyof T];
 
-export interface GitHubConfig {
+export type GitHubConfig = {
   token: string;
   owner: string;
   repo: string;
   pathPrefix: string;
-}
+};

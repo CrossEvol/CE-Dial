@@ -1,10 +1,23 @@
 import type { DialSlice, ExportedDialItem } from './dial-slice';
 import type { GroupSlice } from './group-slice';
 
-import { createGitHubSyncService, isGitHubConfigValid } from '@/lib/github';
+import { createGitHubSyncService, getGithubConfig, isGitHubConfigValid } from '@/lib/github';
 import type { DialItem, GroupItem } from '@src/models';
 import { toast } from 'react-toastify';
 import { type StateCreator } from 'zustand';
+
+/* 
+Create and download the JSON file
+*/
+function exportData(exportData: Record<string | number | symbol, unknown>, filename: string): void {
+  const dataStr = JSON.stringify(exportData, null, 2);
+  const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
+
+  const linkElement = document.createElement('a');
+  linkElement.setAttribute('href', dataUri);
+  linkElement.setAttribute('download', filename);
+  linkElement.click();
+}
 
 export interface ExportDataType {
   groups: Array<Omit<GroupItem, 'id' | 'createdAt' | 'updatedAt'>>;
@@ -13,9 +26,10 @@ export interface ExportDataType {
 
 export interface SharedSlice {
   getFilteredDials: () => DialItem[];
-  exportData: () => Promise<void>;
-  importData: (data: ExportDataType) => Promise<void>;
-  syncData: () => Promise<void>;
+  exportDialsData: () => Promise<void>;
+  exportGithubData: () => Promise<void>;
+  importDialsData: (data: ExportDataType) => Promise<void>;
+  syncDialsData: () => Promise<void>;
   isSyncConfigured: () => Promise<boolean>;
 }
 
@@ -33,30 +47,33 @@ export const createSharedSlice: StateCreator<BearState, [], [], SharedSlice> = (
     });
   },
 
-  exportData: async () => {
+  exportDialsData: async () => {
     // Get access to methods via the complete store
     const store = get();
     const exportedGroups = await store.exportGroups();
     const exportedDials = await store.exportDials();
 
-    const exportData = {
+    const dialsData = {
       groups: exportedGroups,
       dials: exportedDials,
     };
 
+    const exportFileDefaultName = `speedial-dials-backup-${new Date().toISOString().slice(0, 10)}.json`;
+
     // Create and download the JSON file
-    const dataStr = JSON.stringify(exportData, null, 2);
-    const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
-
-    const exportFileDefaultName = `speedial-backup-${new Date().toISOString().slice(0, 10)}.json`;
-
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
+    exportData(dialsData, exportFileDefaultName);
   },
 
-  importData: async data => {
+  exportGithubData: async () => {
+    // Get access to methods via the complete store
+    const githubConfig = await getGithubConfig();
+
+    const exportFileDefaultName = `speedial-github-backup-${new Date().toISOString().slice(0, 10)}.json`;
+
+    exportData(githubConfig, exportFileDefaultName);
+  },
+
+  importDialsData: async data => {
     try {
       if (!data || !data.groups || !data.dials) {
         throw new Error('Invalid import data format');
@@ -78,7 +95,7 @@ export const createSharedSlice: StateCreator<BearState, [], [], SharedSlice> = (
     }
   },
 
-  syncData: async () => {
+  syncDialsData: async () => {
     try {
       const githubService = await createGitHubSyncService();
       console.log('create github service successfully.');
