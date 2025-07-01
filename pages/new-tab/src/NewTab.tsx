@@ -3,7 +3,7 @@ import { useStorage, withErrorBoundary, withSuspense } from '@extension/shared';
 import { exampleThemeStorage } from '@extension/storage';
 import '@src/NewTab.css';
 import '@src/NewTab.scss';
-import { CircleArrowOutUpRight, Facebook, Github, Goal, ImagePlay, Plus, Twitter } from 'lucide-react';
+import { CircleArrowOutUpRight, Facebook, Github, Goal, ImagePlay, PanelRightOpen, Plus, Twitter } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Bounce, toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -20,6 +20,7 @@ import type { DialItem, GroupItem } from './models';
 import { AddDial } from './widgets/AddDial';
 import EditDial from './widgets/EditDial';
 import EditGroup from './widgets/EditGroup';
+import { SearchSideBar } from './widgets/SearchSideBar';
 
 // Import dnd-kit components
 import {
@@ -62,6 +63,7 @@ const NewTab = () => {
   const theme = useStorage(exampleThemeStorage);
   const isLight = theme === 'light';
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Dialog states
   const [isAddDialDialogOpen, setIsAddDialDialogOpen] = useState(false);
@@ -220,7 +222,7 @@ const NewTab = () => {
   };
 
   return (
-    <div className={`min-h-screen p-8 ${isLight ? 'bg-slate-50' : 'bg-gray-800'}`}>
+    <div className={`min-h-screen p-0 ${isLight ? 'bg-slate-50' : 'bg-gray-800'}`}>
       <ToastContainer
         position="top-right"
         autoClose={5000}
@@ -240,124 +242,147 @@ const NewTab = () => {
         collisionDetection={closestCenter}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}>
-        {/* Groups navigation */}
-        <div className="max-w-6xl mx-auto mb-6">
-          <div className="flex flex-wrap gap-1 pb-2">
-            {groups.map(group => (
-              <Droppable key={groupKey(group.id!)} id={groupKey(group.id!)}>
-                <GroupWidget
-                  key={group.id}
-                  group={group}
-                  handleEditGroup={handleEditGroup}
-                  handleDeleteGroup={handleDeleteGroup}
-                  setIsManageGroupDialogOpen={setIsManageGroupDialogOpen}
+        <div className="grid grid-cols-[1fr_auto_1fr] gap-x-4">
+          <div>
+            <SearchSideBar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
+          </div>
+          <main className="py-8 px-2 relative">
+            {isSidebarOpen ? (
+              <div className="absolute top-0 left-0">
+                <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(false)} className="ml-2">
+                  <PanelRightOpen />
+                </Button>
+              </div>
+            ) : null}
+
+            {/* Groups navigation */}
+            <div className="max-w-6xl mb-6">
+              <div className="flex flex-wrap gap-1 pb-2">
+                {groups.map(group => (
+                  <Droppable key={groupKey(group.id!)} id={groupKey(group.id!)}>
+                    <GroupWidget
+                      key={group.id}
+                      group={group}
+                      handleEditGroup={handleEditGroup}
+                      handleDeleteGroup={handleDeleteGroup}
+                      setIsManageGroupDialogOpen={setIsManageGroupDialogOpen}
+                    />
+                  </Droppable>
+                ))}
+
+                {/* Add Group Button */}
+                <AddGroup
+                  isAddGroupDialogOpen={isAddGroupDialogOpen}
+                  setIsAddGroupDialogOpen={setIsAddGroupDialogOpen}
                 />
-              </Droppable>
-            ))}
-
-            {/* Add Group Button */}
-            <AddGroup isAddGroupDialogOpen={isAddGroupDialogOpen} setIsAddGroupDialogOpen={setIsAddGroupDialogOpen} />
-          </div>
-        </div>
-
-        {/* Search bar */}
-        <div className="max-w-3xl mx-auto mb-8">
-          <div className="relative">
-            {/* Add dropdown menu here */}
-            <div className="absolute -left-[52px] top-1/2 transform -translate-y-1/2 z-10">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
-                    <CircleArrowOutUpRight />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuItem onClick={() => window.open('https://www.google.com', '_blank')}>
-                    <Goal />
-                    <span>Google Search</span>
-                    <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => window.open('https://images.google.com', '_blank')}>
-                    <ImagePlay />
-                    <span>Google Images</span>
-                    <DropdownMenuShortcut>⌘I</DropdownMenuShortcut>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              </div>
             </div>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Enter your search..."
-              className="w-full px-4 py-2 rounded-lg text-base border focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <Button
-              variant="link"
-              className="absolute right-2 top-1/2 transform -translate-y-1/2"
-              onClick={handleSearch}>
-              <SearchIcon className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
 
-        {/* Bookmarks grid */}
-        <div className="max-w-6xl mx-auto">
-          <SortableContext items={filteredDials.map(dial => dial.id!.toString())} strategy={rectSortingStrategy}>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {filteredDials.length > 0 ? (
-                <>
-                  {filteredDials.map(dial => (
-                    <SortableItem key={dial.id} id={dial.id!.toString()}>
-                      {({ listeners }) => (
-                        <div {...listeners}>
-                          <Bookmark
-                            bookmark={{
-                              id: dial.id,
-                              title: dial.title,
-                              url: dial.url,
-                              isDefault: false,
-                              IconComponent: getIconForUrl(dial.url),
-                              clickCount: dial.clickCount,
-                              thumbSourceType: dial.thumbSourceType,
-                              thumbUrl: dial.thumbUrl,
-                              thumbData: dial.thumbData,
-                              thumbIndex: dial.thumbIndex,
-                            }}
-                            onEditDialOpen={handleEditDialOpen}
-                          />
-                        </div>
-                      )}
-                    </SortableItem>
-                  ))}
-                  <div
-                    role="button"
-                    onKeyPress={() => {}}
-                    tabIndex={0}
-                    className="cursor-pointer flex flex-col items-center justify-center p-4 rounded-lg border-2 border-dashed h-32 w-full"
-                    onClick={() => setIsAddDialDialogOpen(true)}>
-                    <Plus size={24} className={isLight ? 'text-gray-600' : 'text-gray-300'} />
-                    <span className={`mt-2 text-sm ${isLight ? 'text-gray-600' : 'text-gray-300'}`}>Add Bookmark</span>
-                  </div>
-                  <AddDial open={isAddDialDialogOpen} onOpenChange={setIsAddDialDialogOpen}></AddDial>
-                </>
-              ) : (
-                <>
-                  <div
-                    role="button"
-                    onKeyPress={() => {}}
-                    tabIndex={0}
-                    className="cursor-pointer flex flex-col items-center justify-center p-4 rounded-lg border-2 border-dashed h-32 w-full"
-                    onClick={() => setIsAddDialDialogOpen(true)}>
-                    <Plus size={24} className={isLight ? 'text-gray-600' : 'text-gray-300'} />
-                    <span className={`mt-2 text-sm ${isLight ? 'text-gray-600' : 'text-gray-300'}`}>Add Bookmark</span>
-                  </div>
-                  <AddDial open={isAddDialDialogOpen} onOpenChange={setIsAddDialDialogOpen}></AddDial>
-                </>
-              )}
+            {/* Search bar */}
+            <div className="max-w-3xl mx-auto mb-8">
+              <div className="relative">
+                {/* Add dropdown menu here */}
+                <div className="absolute -left-[52px] top-1/2 transform -translate-y-1/2 z-10">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline">
+                        <CircleArrowOutUpRight />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      <DropdownMenuItem onClick={() => window.open('https://www.google.com', '_blank')}>
+                        <Goal />
+                        <span>Google Search</span>
+                        <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => window.open('https://images.google.com', '_blank')}>
+                        <ImagePlay />
+                        <span>Google Images</span>
+                        <DropdownMenuShortcut>⌘I</DropdownMenuShortcut>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Enter your search..."
+                  className="w-full px-4 py-2 rounded-lg text-base border focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <Button
+                  variant="link"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                  onClick={handleSearch}>
+                  <SearchIcon className="h-5 w-5" />
+                </Button>
+              </div>
             </div>
-          </SortableContext>
+
+            {/* Bookmarks grid */}
+            <div className="max-w-6xl">
+              <SortableContext items={filteredDials.map(dial => dial.id!.toString())} strategy={rectSortingStrategy}>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                  {filteredDials.length > 0 ? (
+                    <>
+                      {filteredDials.map(dial => (
+                        <SortableItem key={dial.id} id={dial.id!.toString()}>
+                          {({ listeners }) => (
+                            <div {...listeners}>
+                              <Bookmark
+                                bookmark={{
+                                  id: dial.id,
+                                  title: dial.title,
+                                  url: dial.url,
+                                  isDefault: false,
+                                  IconComponent: getIconForUrl(dial.url),
+                                  clickCount: dial.clickCount,
+                                  thumbSourceType: dial.thumbSourceType,
+                                  thumbUrl: dial.thumbUrl,
+                                  thumbData: dial.thumbData,
+                                  thumbIndex: dial.thumbIndex,
+                                }}
+                                onEditDialOpen={handleEditDialOpen}
+                              />
+                            </div>
+                          )}
+                        </SortableItem>
+                      ))}
+                      <div
+                        role="button"
+                        onKeyPress={() => {}}
+                        tabIndex={0}
+                        className="cursor-pointer flex flex-col items-center justify-center p-4 rounded-lg border-2 border-dashed h-32 w-full"
+                        onClick={() => setIsAddDialDialogOpen(true)}>
+                        <Plus size={24} className={isLight ? 'text-gray-600' : 'text-gray-300'} />
+                        <span className={`mt-2 text-sm ${isLight ? 'text-gray-600' : 'text-gray-300'}`}>
+                          Add Bookmark
+                        </span>
+                      </div>
+                      <AddDial open={isAddDialDialogOpen} onOpenChange={setIsAddDialDialogOpen}></AddDial>
+                    </>
+                  ) : (
+                    <>
+                      <div
+                        role="button"
+                        onKeyPress={() => {}}
+                        tabIndex={0}
+                        className="cursor-pointer flex flex-col items-center justify-center p-4 rounded-lg border-2 border-dashed h-32 w-full"
+                        onClick={() => setIsAddDialDialogOpen(true)}>
+                        <Plus size={24} className={isLight ? 'text-gray-600' : 'text-gray-300'} />
+                        <span className={`mt-2 text-sm ${isLight ? 'text-gray-600' : 'text-gray-300'}`}>
+                          Add Bookmark
+                        </span>
+                      </div>
+                      <AddDial open={isAddDialDialogOpen} onOpenChange={setIsAddDialDialogOpen}></AddDial>
+                    </>
+                  )}
+                </div>
+              </SortableContext>
+            </div>
+          </main>
+          <div />
         </div>
       </DndContext>
 
