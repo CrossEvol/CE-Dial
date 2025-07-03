@@ -6,16 +6,20 @@ this project used the template from [chrome-extension-boilerplate-react-vite](ht
 
 A modern, customizable speed dial extension for Chrome that helps you organize your favorite websites with a clean, intuitive interface.
 
-![Speed Dial](pages/new-tab/public/logo_horizontal.svg)
+![Speed Dial](chrome-extension/public/icon-128.png)
 
 ## Features
 
 - **Customizable Speed Dial**: Organize your favorite websites in a visually appealing grid
-- **Group Management**: Create and manage groups to categorize your bookmarks
-- **Drag and Drop**: Easily rearrange your speed dials with intuitive drag and drop functionality
-- **Custom Thumbnails**: Upload your own thumbnails or use automatically generated ones
+- **Group Management**: Create, manage, and reorder groups to categorize your bookmarks
+- **Dial Management**: Add, edit, and copy your bookmarks to other groups
+- **Drag and Drop**: Easily rearrange your speed dials and move them between groups with intuitive drag and drop functionality
+- **Custom Thumbnails**: Upload your own thumbnails, use automatically generated ones, or select from a list of default icons or previously used images
+- **Search**: A powerful search bar with a collapsible sidebar for advanced search options
 - **Dark Mode Support**: Seamless switching between light and dark themes
 - **GitHub Sync**: Synchronize your speed dials across devices using GitHub
+- **Settings Menu**: Customize the extension's settings to your liking
+- **Loading Skeleton**: A smooth loading experience with a skeleton screen while the extension is initializing
 
 ## Tech Stack
 
@@ -42,7 +46,7 @@ A modern, customizable speed dial extension for Chrome that helps you organize y
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/speed-dial.git
+git clone https://github.com/CrossEvol/CE-Dial.git
 cd speed-dial
 
 # Install dependencies
