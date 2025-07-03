@@ -27,6 +27,7 @@ import { useDropzone } from 'react-dropzone';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
 import * as z from 'zod';
+import { CopyDialDialog } from './CopyDialDialog';
 
 // Reuse the same schema from AddDial
 const formSchema = z.object({
@@ -48,8 +49,9 @@ const EditDial: React.FC<EditDialProps> = ({ dial, onClose }) => {
   const [previewFile, setPreviewFile] = useState<(File & { preview: string }) | null>(null);
   const [selectedIcon, setSelectedIcon] = useState<IconData | null>(null);
   const [previewImageData, setPreviewImageData] = useState<string | undefined>(undefined);
+  const [isCopyDialogOpen, setIsCopyDialogOpen] = useState(false);
 
-  const { updateDial, groups, dials, initGroups } = useBearStore();
+  const { updateDial, groups, dials, initGroups, addDial } = useBearStore();
 
   // Determine initial preview type based on dial data
   const getInitialPreviewType = (): 'auto' | 'remote' | 'upload' | 'default' => {
@@ -177,6 +179,30 @@ const EditDial: React.FC<EditDialProps> = ({ dial, onClose }) => {
 
   const handleIconSelect = (icon: IconData) => {
     setSelectedIcon(prev => (prev?.name === icon.name ? null : icon));
+  };
+
+  const handleCopy = async (selectedGroupIds: string[]) => {
+    const dialData: DialItem = {
+      url: dial.url,
+      title: dial.title,
+      pos: -1, // Let the store handle the position
+      groupId: -1,
+      thumbSourceType: dial.thumbSourceType,
+      thumbUrl: dial.thumbUrl,
+      thumbData: dial.thumbData,
+      thumbIndex: dial.thumbIndex,
+      clickCount: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    for (const groupId of selectedGroupIds) {
+      if (parseInt(groupId) !== dial.groupId) {
+        await addDial({ ...dialData, groupId: parseInt(groupId) });
+      }
+    }
+
+    toast.success('Copied successfully!');
   };
 
   const renderPreviewSection = () => {
@@ -358,7 +384,23 @@ const EditDial: React.FC<EditDialProps> = ({ dial, onClose }) => {
             name="group"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Group</FormLabel>
+                <div className="flex items-center justify-between">
+                  <FormLabel>Group</FormLabel>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger>
+                      <EllipsisVertical />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuLabel>Options</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setIsCopyDialogOpen(true)}>
+                        <Copy />
+                        <span>Copy</span>
+                        <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
@@ -483,6 +525,7 @@ const EditDial: React.FC<EditDialProps> = ({ dial, onClose }) => {
           </DialogFooter>
         </form>
       </Form>
+      <CopyDialDialog open={isCopyDialogOpen} onOpenChange={setIsCopyDialogOpen} dial={dial} onCopy={handleCopy} />
     </DialogContent>
   );
 };
