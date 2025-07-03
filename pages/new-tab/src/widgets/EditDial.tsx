@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   DropdownMenu,
@@ -48,7 +49,7 @@ const EditDial: React.FC<EditDialProps> = ({ dial, onClose }) => {
   const [selectedIcon, setSelectedIcon] = useState<IconData | null>(null);
   const [previewImageData, setPreviewImageData] = useState<string | undefined>(undefined);
 
-  const { updateDial, groups, initGroups } = useBearStore();
+  const { updateDial, groups, dials, initGroups } = useBearStore();
 
   // Determine initial preview type based on dial data
   const getInitialPreviewType = (): 'auto' | 'remote' | 'upload' | 'default' => {
@@ -229,25 +230,74 @@ const EditDial: React.FC<EditDialProps> = ({ dial, onClose }) => {
       case 'default':
         return (
           <div className="mt-4 space-y-4">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="secondary">Select Default Preview</Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80">
-                <div className="grid grid-cols-4 gap-2 p-2">
-                  {defaultIcons.map((iconData, index) => (
-                    <button
-                      key={index}
-                      className={`p-2 rounded hover:bg-gray-100 ${
-                        selectedIcon?.name === iconData.name ? 'bg-gray-200' : ''
-                      }`}
-                      onClick={() => handleIconSelect(iconData)}>
-                      {iconData.icon}
-                    </button>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
+            <div className="flex space-x-4">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="secondary">Default Icons</Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80">
+                  <div className="grid grid-cols-4 gap-2 p-2">
+                    {defaultIcons.map((iconData, index) => (
+                      <button
+                        key={index}
+                        className={`p-2 rounded hover:bg-gray-100 ${
+                          selectedIcon?.name === iconData.name ? 'bg-gray-200' : ''
+                        }`}
+                        onClick={() => handleIconSelect(iconData)}>
+                        {iconData.icon}
+                      </button>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="secondary">Previous Images</Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-96">
+                  <div className="max-h-80 overflow-y-auto">
+                    {Object.entries(
+                      dials.reduce(
+                        (acc, dial) => {
+                          if (dial.thumbData) {
+                            const groupName = groups.find(g => g.id === dial.groupId)?.name || 'Uncategorized';
+                            if (!acc[groupName]) {
+                              acc[groupName] = [];
+                            }
+                            acc[groupName].push(dial);
+                          }
+                          return acc;
+                        },
+                        {} as Record<string, DialItem[]>,
+                      ),
+                    ).map(([groupName, dials]) => (
+                      <Collapsible key={groupName}>
+                        <CollapsibleTrigger className="w-full text-left py-2 font-semibold">
+                          {groupName}
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="grid grid-cols-4 gap-2 p-2">
+                            {dials.map(dial => (
+                              <button
+                                key={dial.id}
+                                className="p-2 rounded hover:bg-gray-100"
+                                onClick={() => {
+                                  setPreviewImageData(form.getValues('previewUrl'));
+                                  form.setValue('previewUrl', dial.thumbData);
+                                  form.setValue('previewType', 'upload');
+                                }}>
+                                <img src={dial.thumbData} alt={dial.title} className="w-16 h-16 object-cover" />
+                              </button>
+                            ))}
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
 
             {/* Preview Section */}
             <div className="p-4 border rounded-lg flex items-center justify-center">
