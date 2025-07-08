@@ -2,7 +2,7 @@ import type { GitHubConfig } from '@extension/shared';
 import { exampleThemeStorage, githubConfigStorage } from '@extension/storage';
 import yaml from 'js-yaml';
 import { Download, FolderUp, KeyRound, RefreshCw, Settings, SunMoon } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useBearStore } from '../store';
 
@@ -114,6 +114,54 @@ export function SettingsMenu() {
       event.target.value = '';
     }
   };
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    let intervalId: NodeJS.Timeout;
+
+    const getNextMidnight = () => {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const cstOffset = 8 * 60;
+      const localOffset = today.getTimezoneOffset();
+      const cstTime = new Date(today.getTime() + (cstOffset + localOffset) * 60 * 1000);
+      if (now.getTime() > cstTime.getTime()) {
+        cstTime.setDate(cstTime.getDate() + 1);
+      }
+      return cstTime.getTime();
+    };
+
+    const performSync = async () => {
+      try {
+        await syncDialsData();
+        toast.info('Automatic daily sync to GitHub successful.');
+      } catch (error) {
+        console.error('Automatic daily sync to GitHub failed:', error);
+        toast.error('Automatic daily sync failed.');
+      }
+    };
+
+    const setupDailySync = async () => {
+      const configured = await isSyncConfigured();
+      if (configured) {
+        const now = new Date().getTime();
+        const nextMidnight = getNextMidnight();
+        const delay = nextMidnight - now;
+
+        timeoutId = setTimeout(() => {
+          performSync();
+          intervalId = setInterval(performSync, 24 * 60 * 60 * 1000); // Sync every 24 hours
+        }, delay);
+      }
+    };
+
+    setupDailySync();
+
+    return () => {
+      clearTimeout(timeoutId);
+      clearInterval(intervalId);
+    };
+  }, [isSyncConfigured, syncDialsData]);
 
   return (
     <>
