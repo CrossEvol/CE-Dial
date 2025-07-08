@@ -221,6 +221,8 @@ const NewTab = () => {
     setIsEditDialDialogOpen(true);
   };
 
+  const [hoveredUrl, setHoveredUrl] = useState<string | null>(null);
+
   return (
     <div className={`min-h-screen p-0 ${isLight ? 'bg-slate-50' : 'bg-gray-800'}`}>
       <ToastContainer
@@ -329,7 +331,10 @@ const NewTab = () => {
                       {filteredDials.map(dial => (
                         <SortableItem key={dial.id} id={dial.id!.toString()}>
                           {({ listeners }) => (
-                            <div {...listeners}>
+                            <div
+                              {...listeners}
+                              onMouseEnter={() => setHoveredUrl(dial.url)}
+                              onMouseLeave={() => setHoveredUrl(null)}>
                               <Bookmark
                                 bookmark={{
                                   id: dial.id,
@@ -424,6 +429,11 @@ const NewTab = () => {
       <div className="w-52 fixed bottom-4 right-8">
         <SettingsMenu />
       </div>
+
+      {/* Hover URL display */}
+      {hoveredUrl && (
+        <div className="fixed bottom-0 left-0 bg-purple-300 text-gray-900 text-sm px-4 py-1">{hoveredUrl}</div>
+      )}
     </div>
   );
 };
