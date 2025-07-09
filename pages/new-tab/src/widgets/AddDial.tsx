@@ -22,7 +22,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import type { IconData } from '@src/lib/defaultIcons';
 import { defaultIcons } from '@src/lib/defaultIcons';
 import type { DialItem } from '@src/models';
-import { CircleX, ClipboardCopy, Copy, EllipsisVertical, ImageUp, StepBack } from 'lucide-react';
+import { CircleX, ClipboardCopy, Copy, EllipsisVertical, Images, ImageUp, Shapes, StepBack } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useForm } from 'react-hook-form';
@@ -278,7 +278,9 @@ export function AddDial({ open, onOpenChange }: AddDialProps) {
             <div className="flex space-x-4">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="secondary">Default Icons</Button>
+                  <Button variant="secondary">
+                    <Shapes /> Default Icons
+                  </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-80">
                   <div className="grid grid-cols-5 gap-2 p-2">
@@ -297,7 +299,9 @@ export function AddDial({ open, onOpenChange }: AddDialProps) {
               </Popover>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="secondary">Previous Images</Button>
+                  <Button variant="secondary">
+                    <Images /> Previous Images
+                  </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-96">
                   <div className="max-h-80 overflow-y-auto">

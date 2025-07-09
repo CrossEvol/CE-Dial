@@ -21,7 +21,7 @@ import type { IconData } from '@src/lib/defaultIcons';
 import { defaultIcons } from '@src/lib/defaultIcons';
 import type { DialItem, ThumbSourceType } from '@src/models';
 import { useBearStore } from '@src/store';
-import { CircleX, ClipboardCopy, Copy, EllipsisVertical, ImageUp, StepBack } from 'lucide-react';
+import { CircleX, ClipboardCopy, Copy, EllipsisVertical, Images, ImageUp, Shapes, StepBack } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useForm } from 'react-hook-form';
@@ -293,7 +293,9 @@ const EditDial: React.FC<EditDialProps> = ({ dial, onClose }) => {
             <div className="flex space-x-4">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="secondary">Default Icons</Button>
+                  <Button variant="secondary">
+                    <Shapes /> Default Icons
+                  </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-80">
                   <div className="grid grid-cols-4 gap-2 p-2">
@@ -313,7 +315,9 @@ const EditDial: React.FC<EditDialProps> = ({ dial, onClose }) => {
 
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="secondary">Previous Images</Button>
+                  <Button variant="secondary">
+                    <Images /> Previous Images
+                  </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-96">
                   <div className="max-h-80 overflow-y-auto">
