@@ -22,7 +22,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import type { IconData } from '@src/lib/defaultIcons';
 import { defaultIcons } from '@src/lib/defaultIcons';
 import type { DialItem } from '@src/models';
-import { CircleX, Copy, EllipsisVertical, StepBack } from 'lucide-react';
+import { CircleX, ClipboardCopy, Copy, EllipsisVertical, ImageUp, StepBack } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useForm } from 'react-hook-form';
@@ -188,6 +188,35 @@ export function AddDial({ open, onOpenChange }: AddDialProps) {
     });
   };
 
+  const handlePasteFromClipboard = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    try {
+      const clipboardItems = await navigator.clipboard.read();
+      for (const item of clipboardItems) {
+        const imageType = item.types.find(type => type.startsWith('image/'));
+        if (imageType) {
+          const blob = await item.getType(imageType);
+          const file = new File([blob], 'clipboard-image.png', { type: imageType });
+          const base64Data = await fileToBase64(file);
+          const previewUrl = URL.createObjectURL(file);
+
+          setPreviewFile(
+            Object.assign(file, {
+              preview: previewUrl,
+            }),
+          );
+          form.setValue('previewUrl', base64Data);
+          toast.success('Image pasted from clipboard!');
+          return;
+        }
+      }
+      toast.info('No image found in clipboard.');
+    } catch (error) {
+      console.error('Failed to read clipboard contents: ', error);
+      toast.error('Failed to read clipboard. Please allow clipboard access.');
+    }
+  };
+
   const handleIconSelect = (icon: IconData) => {
     setSelectedIcon(prev => (prev?.name === icon.name ? null : icon));
   };
@@ -221,9 +250,14 @@ export function AddDial({ open, onOpenChange }: AddDialProps) {
             <div className="flex gap-4 mb-4">
               <div {...getRootProps()}>
                 <input {...getInputProps()} />
-                <Button type="button" variant="outline">
-                  Upload Image
-                </Button>
+                <div className="flex justify-center space-x-4">
+                  <Button type="button" variant="outline">
+                    <ImageUp /> Upload Image
+                  </Button>
+                  <Button type="button" variant="outline" onClick={handlePasteFromClipboard}>
+                    <ClipboardCopy /> From Clipboard
+                  </Button>
+                </div>
               </div>
             </div>
             {previewFile ? (
