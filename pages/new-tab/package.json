@@ -46,7 +46,7 @@
     "emoji-picker-react": "^4.12.2",
     "js-yaml": "^4.1.0",
     "lucide-react": "^0.475.0",
-    "octokit": "^4.1.2",
+    "octokit": "^5.0.5",
     "react-dropzone": "^14.3.8",
     "react-hook-form": "^7.54.2",
     "react-toastify": "^11.0.5",
